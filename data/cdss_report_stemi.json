@@ -1,0 +1,139 @@
+{
+  "cdss_version": "BiosenseLink-CDSS v1.0",
+  "timestamp": "2023-10-05T12:00:00Z",
+  "disclaimer": "This analysis is for clinical decision support only and does not replace professional medical judgment.",
+  "patient_context": {
+    "signal_source": "Simulated single-lead ECG (Lead II equivalent)",
+    "sampling_rate_hz": 500,
+    "duration_seconds": 10
+  },
+  "quantitative_summary": {
+    "heart_rate_bpm": 90.1,
+    "heart_rate_classification": "Tachycardia",
+    "pr_interval_ms": 159.0,
+    "qrs_duration_ms": 146.0,
+    "qtc_bazett_ms": 293.0,
+    "st_deviation_mv": 0.623,
+    "rr_regularity_cv_percent": 2.0,
+    "beats_analyzed": 14
+  },
+  "clinical_reasoning": "I need to analyze the provided ECG data step by step. The heart rate is 90.1 bpm, which falls under tachycardia according to the classification criteria (HR 101-150 bpm). However, the instantaneous HR values range from 87.7 to 94.3 bpm, with a CV of 2.0%, indicating a very regular rhythm. The PR interval is 159 ms, which is within normal limits (120-200 ms). The QRS duration is 146 ms, which is prolonged (120-159 ms) and may indicate a bundle branch block. The QTc interval is 293 ms, which is normal for a male (assuming male, as not specified). The ST deviation is +0.623 mV, which is elevated and highly suspicious for STEMI or other conditions like pericarditis. I must cross-reference these findings. The elevated ST elevation, especially with a prolonged QRS, could suggest a STEMI, but the rhythm is regular and no other abnormalities are apparent. I should consider the possibility of acute coronary syndrome, and the ST elevation is critical. The QRS prolongation might be incidental or related to the STEMI. I need to provide a differential diagnosis and recommend actions accordingly.",
+  "findings": [
+    {
+      "parameter": "Heart Rate",
+      "value": "90.1 bpm",
+      "severity": "ATTENTION",
+      "interpretation": "Heart rate is elevated but not severely. Tachycardia classification applies.",
+      "guideline_reference": "AHA/ACC/HRS 2018",
+      "snomed_ct_code": "44400001",
+      "loinc_code": "59127-6"
+    },
+    {
+      "parameter": "PR Interval",
+      "value": "159 ms",
+      "severity": "NORMAL",
+      "interpretation": "PR interval is within normal range.",
+      "guideline_reference": "AHA/ACC 2009",
+      "snomed_ct_code": "44000003",
+      "loinc_code": "59128-4"
+    },
+    {
+      "parameter": "QRS Duration",
+      "value": "146 ms",
+      "severity": "ALERT",
+      "interpretation": "QRS duration is prolonged, suggesting possible bundle branch block.",
+      "guideline_reference": "AHA/ACCF/HRS 2009",
+      "snomed_ct_code": "44200004",
+      "loinc_code": "59129-2"
+    },
+    {
+      "parameter": "QTc Interval",
+      "value": "293 ms",
+      "severity": "NORMAL",
+      "interpretation": "QTc interval is within normal limits.",
+      "guideline_reference": "ESC 2015",
+      "snomed_ct_code": "44300005",
+      "loinc_code": "59130-0"
+    },
+    {
+      "parameter": "ST Segment Deviation",
+      "value": "+0.623 mV",
+      "severity": "CRITICAL",
+      "interpretation": "Significant ST elevation, highly suggestive of acute coronary syndrome, particularly STEMI.",
+      "guideline_reference": "ESC 2017 STEMI Guidelines",
+      "snomed_ct_code": "44500009",
+      "loinc_code": "59131-8"
+    },
+    {
+      "parameter": "RR Regularity",
+      "value": "CV(RR) = 2.0%",
+      "severity": "NORMAL",
+      "interpretation": "Rhythm is regular, consistent with sinus rhythm.",
+      "guideline_reference": "ESC 2020 AF Guidelines",
+      "snomed_ct_code": "44600007",
+      "loinc_code": "59132-6"
+    }
+  ],
+  "differential_diagnosis": [
+    {
+      "diagnosis": "ST Elevation Myocardial Infarction (STEMI)",
+      "probability": "HIGH",
+      "icd11_code": "410.20",
+      "supporting_evidence": "Significant ST elevation (>0.1 mV in multiple leads) with normal sinus rhythm and no other confounding factors.",
+      "contradicting_evidence": "RR regularity is normal, no signs of atrial fibrillation or other arrhythmias."
+    },
+    {
+      "diagnosis": "Pericarditis",
+      "probability": "MODERATE",
+      "icd11_code": "134.0",
+      "supporting_evidence": "ST elevation in multiple leads, often with reciprocal T wave changes, but no mention of T wave changes here.",
+      "contradicting_evidence": "ST elevation is diffuse but not necessarily with the typical pericarditis pattern; also, no clinical correlation provided."
+    },
+    {
+      "diagnosis": "Bundle Branch Block",
+      "probability": "LOW",
+      "icd11_code": "425.4",
+      "supporting_evidence": "Prolonged QRS duration (146 ms) which may indicate bundle branch block.",
+      "contradicting_evidence": "No abnormal Q waves or other signs of old myocardial infarction; ST elevation is more prominent."
+    }
+  ],
+  "recommended_actions": [
+    {
+      "action": "Activate STEMI protocol immediately",
+      "urgency": "IMMEDIATE",
+      "rationale": "High probability of STEMI based on significant ST elevation. Time is muscle, and urgent reperfusion is indicated."
+    },
+    {
+      "action": "Administer aspirin and consider nitroglycerin",
+      "urgency": "URGENT",
+      "rationale": "Standard anti-ischemic therapy for suspected acute coronary syndrome."
+    },
+    {
+      "action": "Perform immediate ECG and cardiac biomarkers",
+      "urgency": "URGENT",
+      "rationale": "Confirm diagnosis and assess myocardial damage."
+    },
+    {
+      "action": "Prepare for possible catheterization lab intervention",
+      "urgency": "URGENT",
+      "rationale": "Indicated for STEMI with ST elevation >1 mm in two or more leads."
+    },
+    {
+      "action": "Monitor for arrhythmias and hemodynamic instability",
+      "urgency": "CONTINUOUS",
+      "rationale": "ST elevation can lead to arrhythmias or heart failure; continuous monitoring is essential."
+    }
+  ],
+  "_pipeline_metadata": {
+    "biosenselink_version": "1.0.0",
+    "cdss_model": "biosenselink-cdss",
+    "inference_time_seconds": 390.38,
+    "performance": {
+      "tokens_generated": 1685,
+      "generation_speed_tps": 4.4,
+      "total_time_seconds": 386.27
+    },
+    "execution_mode": "LOCAL (RGPD compliant)",
+    "timestamp_utc": "2026-06-01T12:52:20.096710+00:00"
+  }
+}

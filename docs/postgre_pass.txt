@@ -1,0 +1,16 @@
+======================================================================
+ BIOSENSELINK - CREDENCIALES DE BASE DE DATOS Y GESTIÓN CLINICA
+======================================================================
+
+1. Panel de Control de pgAdmin (Acceso Web - Puerto 5050):
+   * Usuario (Email): clinical-admin@osakidetza.eus
+   * Contraseña:      ClinicalSecureAdmin2026!
+
+2. Base de Datos PostgreSQL (Puerto 5432):
+   * Usuario:         dbadmin
+   * Contraseña:      SecuredHospitalPass2026!
+   * Base de datos:   medical_platform
+
+======================================================================
+ Guardado automáticamente el: 2026-06-02
+======================================================================

@@ -1,0 +1,23 @@
+# =============================================================================
+# BiosenseLink - Dependencias Python
+# =============================================================================
+# Motor de procesamiento de senales biomedicas ECG con analisis PQRST,
+# filtrado digital y soporte de decision clinica.
+#
+# Instalar con:  pip install -r requirements.txt
+# =============================================================================
+
+# --- Computacion Cientifica ---
+numpy>=1.24.0
+scipy>=1.11.0
+
+# --- Analisis de Senales Fisiologicas (ECG, EEG, EMG) ---
+# NeuroKit2: Libreria revisada por pares (Makowski et al. 2021, Behav Res Methods)
+# Implementa: ECGSYN (McSharry), Pan-Tompkins, delineacion PQRST, HRV
+neurokit2>=0.2.7
+
+# --- Visualizacion ---
+matplotlib>=3.7.0
+
+# --- Utilidades ---
+pandas>=2.0.0

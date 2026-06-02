@@ -1,0 +1,65 @@
+/* Hojas de estilo personalizadas - Suite SCADA de Simulación Médica */
+
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Grilla milimetrada del osciloscopio de ECG */
+.bg-ecg-grid {
+    background-size: 10px 10px, 50px 50px;
+    background-image: 
+        linear-gradient(to right, rgba(239, 68, 68, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(239, 68, 68, 0.04) 1px, transparent 1px),
+        linear-gradient(to right, rgba(239, 68, 68, 0.12) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(239, 68, 68, 0.12) 1px, transparent 1px);
+}
+
+h1, h2, h3, .font-title {
+    font-family: 'Outfit', sans-serif;
+}
+
+/* Estilos Neon Glassmorphism */
+.glow-border {
+    border: 1px solid rgba(20, 184, 166, 0.15);
+    box-shadow: 0 0 20px rgba(20, 184, 166, 0.05);
+}
+
+.glow-green {
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.08);
+}
+
+.glow-yellow {
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    box-shadow: 0 0 25px rgba(245, 158, 11, 0.08);
+}
+
+.glow-red {
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.12);
+    animation: border-pulse 2s infinite alternate;
+}
+
+@keyframes border-pulse {
+    0% { border-color: rgba(239, 68, 68, 0.2); }
+    100% { border-color: rgba(239, 68, 68, 0.6); }
+}
+
+/* Barra de desplazamiento estilizada de bajo impacto */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #090d16;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #334155;
+}

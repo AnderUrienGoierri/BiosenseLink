@@ -1,0 +1,154 @@
+{
+  "resourceType": "Bundle",
+  "type": "collection",
+  "timestamp": "2026-06-02T15:19:00.774454Z",
+  "entry": [
+    {
+      "fullUrl": "urn:uuid:eb0aa268-6c7c-4e76-8c9e-76346db1b653",
+      "resource": {
+        "resourceType": "Patient",
+        "id": "eb0aa268-6c7c-4e76-8c9e-76346db1b653",
+        "active": true
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:b8982f61-39da-46c4-b005-ac09b2eb59a5",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "b8982f61-39da-46c4-b005-ac09b2eb59a5",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "8867-4",
+              "display": "Heart rate"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/eb0aa268-6c7c-4e76-8c9e-76346db1b653"
+        },
+        "valueQuantity": {
+          "value": 72.08906335059244,
+          "unit": "/min",
+          "system": "http://unitsofmeasure.org",
+          "code": "/min"
+        }
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:02116658-06ee-400f-b5de-6bd3c5668f2f",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "02116658-06ee-400f-b5de-6bd3c5668f2f",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "46087-3",
+              "display": "PR interval"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/eb0aa268-6c7c-4e76-8c9e-76346db1b653"
+        },
+        "valueQuantity": {
+          "value": 276.2,
+          "unit": "ms",
+          "system": "http://unitsofmeasure.org",
+          "code": "ms"
+        }
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:0f274a1c-87e0-48c0-b878-6b66f89533f2",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "0f274a1c-87e0-48c0-b878-6b66f89533f2",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "46088-1",
+              "display": "QRS duration"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/eb0aa268-6c7c-4e76-8c9e-76346db1b653"
+        },
+        "valueQuantity": {
+          "value": 90,
+          "unit": "ms",
+          "system": "http://unitsofmeasure.org",
+          "code": "ms"
+        }
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:9f5d0f9f-e298-4769-ae5a-ec3f5be7e587",
+      "resource": {
+        "resourceType": "Observation",
+        "id": "9f5d0f9f-e298-4769-ae5a-ec3f5be7e587",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "8636-4",
+              "display": "QTc interval"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/eb0aa268-6c7c-4e76-8c9e-76346db1b653"
+        },
+        "valueQuantity": {
+          "value": 416.5204964512388,
+          "unit": "ms",
+          "system": "http://unitsofmeasure.org",
+          "code": "ms"
+        }
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:72b9dc54-1286-4968-804c-3a668e1f4a97",
+      "resource": {
+        "resourceType": "DiagnosticReport",
+        "id": "72b9dc54-1286-4968-804c-3a668e1f4a97",
+        "status": "final",
+        "code": {
+          "coding": [
+            {
+              "system": "http://loinc.org",
+              "code": "11524-6",
+              "display": "EKG study"
+            }
+          ]
+        },
+        "subject": {
+          "reference": "Patient/eb0aa268-6c7c-4e76-8c9e-76346db1b653"
+        },
+        "result": [
+          {
+            "reference": "Observation/b8982f61-39da-46c4-b005-ac09b2eb59a5"
+          },
+          {
+            "reference": "Observation/02116658-06ee-400f-b5de-6bd3c5668f2f"
+          },
+          {
+            "reference": "Observation/0f274a1c-87e0-48c0-b878-6b66f89533f2"
+          },
+          {
+            "reference": "Observation/9f5d0f9f-e298-4769-ae5a-ec3f5be7e587"
+          }
+        ],
+        "conclusion": "Primary DX: Bloqueo AV 1er grado. (Prob: HIGH) | AI Reasoning: Analisis topografico automatizado basado en matrices ECG-12...."
+      }
+    }
+  ]
+}

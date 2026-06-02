@@ -1,0 +1,5 @@
+package com.osakidetza.simulationlab;
+
+import com.getcapacitor.BridgeActivity;
+
+public class MainActivity extends BridgeActivity {}

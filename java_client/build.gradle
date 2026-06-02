@@ -1,0 +1,26 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'com.osakidetza.simulationlab'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'org.java-websocket:Java-WebSocket:1.5.4'
+    implementation 'org.jfree:jfreechart:1.5.4'
+}
+
+application {
+    mainClass = 'com.osakidetza.simulationlab.BiosenseLinkApp'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}

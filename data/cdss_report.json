@@ -1,0 +1,9 @@
+{
+  "error": "timed out",
+  "_pipeline_metadata": {
+    "biosenselink_version": "1.0.0",
+    "cdss_model": "biosenselink-cdss",
+    "execution_mode": "LOCAL",
+    "timestamp_utc": "2026-06-01T12:45:01.877537+00:00"
+  }
+}

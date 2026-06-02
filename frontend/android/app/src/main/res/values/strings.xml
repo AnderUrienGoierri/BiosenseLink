@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Simulation Lab</string>
+    <string name="title_activity_main">Simulation Lab</string>
+    <string name="package_name">com.osakidetza.simulationlab</string>
+    <string name="custom_url_scheme">com.osakidetza.simulationlab</string>
+</resources>

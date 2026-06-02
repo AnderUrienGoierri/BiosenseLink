@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suite de Simulación Point-of-Care (PoC) & HAPI FHIR</title>
+    
+    <!-- Tailwind CSS Oficial -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js Oficial -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts: Inter & Outfit -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        title: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        medical: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            400: '#2dd4bf',
+                            500: '#14b8a6', // Teal clínico brillante
+                            600: '#0d9488',
+                            950: '#042f2e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Estilos Personalizados Neon & ECG Grid -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="h-screen w-full flex overflow-hidden bg-[#090d16]">
+
+    <!-- PORTAL DE AUTENTICACIÓN CLÍNICA PROFESIONAL (RBAC) -->
+    <div id="auth-portal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center z-50 transition-all duration-500">
+        <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl w-full max-w-md shadow-2xl relative overflow-hidden">
+            <!-- Ecos de brillo neon -->
+            <div class="absolute -top-10 -left-10 w-40 h-40 bg-medical-500/10 rounded-full blur-2xl"></div>
+            <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-2xl"></div>
+            
+            <div class="text-center mb-6">
+                <div class="mx-auto w-16 h-16 bg-medical-950/50 border border-medical-500/30 rounded-2xl flex items-center justify-center p-2 mb-3">
+                    <svg class="w-8 h-8 text-medical-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-black text-white uppercase tracking-wider font-title">Identificación Profesional</h2>
+                <p class="text-xs text-slate-400 mt-1"><span id="auth-desc">Acceso restringido para el personal del Servicio Vasco de Salud</span></p>
+            </div>
+            
+            <div class="space-y-4">
+                <!-- Selector de Perfiles -->
+                <div>
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2"><span id="select-prof">Seleccionar Profesional</span></label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="selectAuthProfile('admin')" id="profile-btn-admin" class="p-3 rounded-xl border transition-all text-left flex flex-col justify-between h-24 bg-slate-950/40 border-medical-500/30 text-medical-400 ring-2 ring-medical-500/10">
+                            <span class="w-8 h-8 bg-medical-500/10 rounded-lg flex items-center justify-center text-xs font-bold">AO</span>
+                            <div>
+                                <span class="block text-xs font-bold text-slate-200">Dr. Ander Otxoa</span>
+                                <span class="block text-[8px] text-slate-400 uppercase">Jefe de Cardiología</span>
+                            </div>
+                        </button>
+                        <button onclick="selectAuthProfile('nurse')" id="profile-btn-nurse" class="p-3 rounded-xl border transition-all text-left flex flex-col justify-between h-24 bg-slate-950/20 border-slate-800 text-slate-500 hover:border-slate-750 hover:text-slate-450">
+                            <span class="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center text-xs font-bold">AR</span>
+                            <div>
+                                <span class="block text-xs font-bold text-slate-300">Enf. Amaia Ruiz</span>
+                                <span class="block text-[8px] text-slate-500 uppercase">Enfermera de Guardia</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Input de PIN -->
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label for="auth-pin" class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Código PIN de Acceso</label>
+                        <span class="text-[8px] text-slate-500 font-mono" id="pin-hint"><span id="pin-hint">Ander PIN: 1234 | Amaia PIN: 5678</span></span>
+                    </div>
+                    <input type="password" id="auth-pin" maxlength="4" placeholder="••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-center text-xl font-bold tracking-widest text-slate-100 placeholder-slate-700 focus:outline-none focus:border-medical-500 transition">
+                </div>
+                
+                <button onclick="attemptLogin()" class="w-full py-3 rounded-xl bg-gradient-to-r from-medical-500 to-emerald-500 hover:from-medical-600 hover:to-emerald-600 text-slate-950 font-bold text-sm tracking-wide shadow-lg transition duration-200 uppercase mt-4">
+                    <span id="login-btn">Validar Credenciales</span>
+                </button>
+                
+                <p id="auth-error-msg" class="text-[10px] text-red-500 font-bold text-center mt-2 hidden animate-pulse flex items-center justify-center gap-1">
+                    <svg class="w-3.5 h-3.5 text-red-500 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    <span>PIN Incorrecto. Intento de intrusión registrado.</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- BARRA LATERAL IZQUIERDA (DEVICE SIDEBAR) -->
+    <aside class="w-80 bg-slate-950 border-r border-slate-900 flex flex-col justify-between flex-shrink-0 z-10">
+        <div>
+            <!-- Header Logo Corporativo HD -->
+            <div class="p-6 border-b border-slate-900 flex flex-col items-center gap-3">
+                <div class="relative w-20 h-20 rounded-2xl overflow-hidden border border-medical-500/20 bg-slate-900 flex items-center justify-center p-1">
+                    <img src="../../Assets/clinical_simulation_logo.png" alt="Logo de Simulación" class="object-cover w-full h-full rounded-xl">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950/40 to-transparent"></div>
+                </div>
+                <div class="text-center">
+                    <h2 class="text-md font-extrabold tracking-wider text-white">SIMULATION SUITE PoC</h2>
+                    <p class="text-[10px] text-slate-500 font-mono tracking-widest mt-0.5">INTEROPERABILIDAD FHIR R4</p>
+                </div>
+            </div>
+
+            <!-- Navegador de Dispositivos Clínicos Digitales -->
+            <div class="px-4 py-6">
+                <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3 mb-4"><span id="active-devices-title">Dispositivos PoC Activos</span></h3>
+                <nav class="space-y-2" id="device-nav">
+                    
+                    <!-- Dispositivo 1 -->
+                    <button onclick="selectDevice('welch-allyn')" id="nav-welch" class="w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center gap-3 bg-medical-950/20 text-medical-400 border border-medical-500/30 shadow-md">
+                        <div class="w-8 h-8 rounded-lg bg-medical-500/10 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-medical-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h4 class="text-xs font-bold tracking-wide uppercase"><span id="welch-name">Vital Signs Monitor</span></h4>
+                            <p class="text-[10px] text-slate-400 font-mono truncate">Welch Allyn Connex</p>
+                        </div>
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" id="dot-welch"></span>
+                    </button>
+
+                    <!-- Dispositivo 2 -->
+                    <button onclick="selectDevice('istat-gas')" id="nav-istat" class="w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center gap-3 bg-slate-900/30 text-slate-400 border border-transparent hover:bg-slate-900/60 hover:text-slate-200">
+                        <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                            </svg>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h4 class="text-xs font-bold tracking-wide uppercase">Gasometría Arterial</h4>
+                            <p class="text-[10px] text-slate-500 font-mono truncate">Abbott i-STAT Alinity</p>
+                        </div>
+                        <span class="w-2 h-2 rounded-full bg-emerald-500" id="dot-istat"></span>
+                    </button>
+
+                    <!-- Dispositivo 3 -->
+                    <button onclick="selectDevice('accu-chek')" id="nav-accu" class="w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center gap-3 bg-slate-900/30 text-slate-400 border border-transparent hover:bg-slate-900/60 hover:text-slate-200">
+                        <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h4 class="text-xs font-bold tracking-wide uppercase">Glucómetro e Hitos</h4>
+                            <p class="text-[10px] text-slate-500 font-mono truncate">Roche Accu-Chek Inform II</p>
+                        </div>
+                        <span class="w-2 h-2 rounded-full bg-emerald-500" id="dot-accu"></span>
+                    </button>
+
+                    <!-- Dispositivo 4 -->
+                    <button onclick="selectDevice('coaguchek')" id="nav-coag" class="w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center gap-3 bg-slate-900/30 text-slate-400 border border-transparent hover:bg-slate-900/60 hover:text-slate-200">
+                        <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h4 class="text-xs font-bold tracking-wide uppercase">Coagulómetro</h4>
+                            <p class="text-[10px] text-slate-500 font-mono truncate">Roche CoaguChek Pro II</p>
+                        </div>
+                        <span class="w-2 h-2 rounded-full bg-emerald-500" id="dot-coag"></span>
+                    </button>
+
+                    <!-- Dispositivo 5 -->
+                    <button onclick="selectDevice('alere-triage')" id="nav-alere" class="w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center gap-3 bg-slate-900/30 text-slate-400 border border-transparent hover:bg-slate-900/60 hover:text-slate-200">
+                        <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h4 class="text-xs font-bold tracking-wide uppercase">Inmunología Cardíaca</h4>
+                            <p class="text-[10px] text-slate-500 font-mono truncate">Alere Triage MeterPro</p>
+                        </div>
+                        <span class="w-2 h-2 rounded-full bg-emerald-500" id="dot-alere"></span>
+                    </button>
+
+                    <!-- Dispositivo 6: VIH Molecular -->
+                    <button onclick="selectDevice('hiv-monitor')" id="nav-hiv" class="w-full text-left px-4 py-3 rounded-xl transition-all duration-200 flex items-center gap-3 bg-slate-900/30 text-slate-400 border border-transparent hover:bg-slate-900/60 hover:text-slate-200">
+                        <div class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12a7.5 7.5 0 0015 0m-15 0a7.5 7.5 0 1115 0m-15 0H3m16.5 0H21m-1.5 0H12m-3 0h3m0 0l-3-3m3 3l3-3m-3 9l-3-3m3 3l3-3" />
+                            </svg>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h4 class="text-xs font-bold tracking-wide uppercase">Seguimiento VIH PoC</h4>
+                            <p class="text-[10px] text-slate-500 font-mono truncate">m-PIMA & GeneXpert</p>
+                        </div>
+                        <span class="w-2 h-2 rounded-full bg-emerald-500" id="dot-hiv"></span>
+                    </button>
+
+                </nav>
+            </div>
+        </div>
+
+        <!-- Metadatos de la Tesis Ph.D. de Ander -->
+        <div class="p-6 border-t border-slate-900 bg-slate-950/70">
+            <span class="block text-[9px] uppercase tracking-widest font-mono text-slate-500 font-bold">Investigación Doctoral</span>
+            <span class="block text-xs font-semibold text-slate-300 mt-1">Decentralized Diagnostic Data</span>
+            <span class="block text-[10px] text-slate-500 mt-0.5">Osakidetza • BRTA Research (2026)</span>
+        </div>
+    </aside>
+
+    <!-- ÁREA DE CONTENIDO (MAIN FRAME) -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        
+        <!-- HEADER SUPERIOR -->
+        <header class="bg-slate-900 border-b border-slate-900 px-6 py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 flex-shrink-0">
+            <div>
+                <div class="flex items-center gap-2.5">
+                    <h1 class="text-xl font-bold bg-gradient-to-r from-medical-500 to-emerald-400 bg-clip-text text-transparent uppercase tracking-wider" id="header-device-title"><span>Vital Signs Monitor</span></h1>
+                    <span id="rbac-badge" class="px-2 py-0.5 rounded bg-yellow-950 border border-yellow-500/20 text-yellow-400 font-mono text-[9px] font-bold uppercase tracking-wider"><span id="rbac-badge">MODO CONSULTA</span></span>
+                </div>
+                <p class="text-xs text-slate-400 font-mono mt-0.5" id="header-device-subtitle">Evaluación de Signos Vitales Básicos • Welch Allyn Connex</p>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <!-- SELECTOR DE IDIOMA (ES/EU) -->
+                <div class="flex items-center gap-1 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+                    <button id="lang-btn-es" onclick="changeLanguage('es')" class="px-2.5 py-1 rounded-lg bg-medical-500 text-white font-bold text-[10px] transition cursor-pointer">ES</button>
+                    <button id="lang-btn-eu" onclick="changeLanguage('eu')" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-400 font-bold text-[10px] hover:text-white transition cursor-pointer">EU</button>
+                </div>
+                
+                <!-- CONTROL DE MODO DE RED (WIFI / OFFLINE) -->
+                <div class="flex items-center gap-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+                    <input type="text" id="server-ip-input" value="localhost" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-300 w-24 focus:border-medical-500 outline-none" title="IP del servidor Python (ej: 192.168.1.55)">
+                    <button id="network-mode-btn" onclick="toggleNetworkMode()" class="px-3 py-1 rounded-lg bg-emerald-950/40 border border-emerald-500/20 text-emerald-400 font-bold text-[10px] uppercase tracking-wider transition">
+                        <span id="network-mode-btn">Modo Local (WiFi)</span>
+                    </button>
+                </div>
+                
+                <!-- AUDIO MUTE/UNMUTE CLINICO -->
+                <button onclick="toggleAudio()" id="audio-toggle-btn" class="p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-450 hover:text-slate-200 transition relative flex items-center justify-center w-10 h-10 group" title="Silenciar/Activar alarmas acústicas">
+                    <svg id="audio-icon-muted" class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+                    </svg>
+                    <svg id="audio-icon-unmuted" class="w-5 h-5 text-emerald-400 hidden animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                    </svg>
+                </button>
+                
+                <!-- ACCESO A PGADMIN4 SQL -->
+                <a href="http://localhost:5050" target="_blank" rel="noopener" class="p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200 transition flex items-center justify-center w-10 h-10 group" title="Abrir Consola PostgreSQL pgAdmin 4">
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+                    </svg>
+                </a>
+                
+                <!-- DETALLES DE SESIÓN CLÍNICA -->
+                <div class="text-right hidden md:block">
+                    <span id="user-display-name" class="text-xs font-black text-slate-200 block">Identificando...</span>
+                    <span id="user-display-title" class="text-[9px] text-slate-500 font-mono block">Validación en curso</span>
+                </div>
+                
+                <!-- AVATAR / CERRAR SESIÓN -->
+                <button onclick="logout()" class="w-10 h-10 rounded-full bg-gradient-to-br from-medical-500 to-emerald-400 flex items-center justify-center text-sm font-extrabold text-slate-950 shadow-md group relative hover:ring-2 hover:ring-red-500 transition duration-300">
+                    <span id="user-avatar-initials" class="group-hover:hidden select-none">??</span>
+                    <!-- Icono apagar en hover -->
+                    <svg class="w-5 h-5 text-slate-950 hidden group-hover:block mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- CUERPO DE PANTALLAS (SCROLLABLE AREA) -->
+        <main class="flex-1 p-6 overflow-y-auto space-y-6">
+            
+            <!-- CONSOLA DE PARAMETRIZACIÓN Y CONTROL REST -->
+            <div class="bg-slate-900/40 rounded-xl p-5 border border-slate-900/60 glow-border">
+                <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 border-b border-slate-800/80 pb-4 mb-4">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                            <svg class="w-4 h-4 text-medical-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <span>Consola de Mando Fisiológico & Control REST</span>
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Controla la telemetría, altera el comportamiento físico e inyecta ruido de señal en vivo.</p>
+                    </div>
+
+                    <!-- Botones Globales de Encendido / Pausa / Parada -->
+                    <div class="flex items-center gap-2">
+                        <button onclick="sendControlAction('resume')" id="btn-power-on" class="px-3 py-1.5 rounded-lg bg-emerald-950/40 text-emerald-400 border border-emerald-500/20 text-xs font-bold transition hover:bg-emerald-900/30 flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span> TRANSMITIENDO
+                        </button>
+                        <button onclick="sendControlAction('pause')" id="btn-power-pause" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 text-xs font-bold transition hover:bg-slate-700 flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-slate-300 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/></svg>
+                            PAUSAR OBSERVACIONES
+                        </button>
+                        
+                        <!-- Bot�n Premium para Lanzar Visualizador Cl�nico Desktop -->
+                        <button onclick="runDesktopVisualizer()" id="btn-run-desktop" class="px-3 py-1.5 rounded-lg bg-medical-950/40 text-medical-400 border border-medical-500/30 text-xs font-bold transition hover:bg-medical-900/40 hover:text-medical-300 flex items-center gap-1.5 shadow-md shadow-medical-500/5 group relative overflow-hidden">
+                            <span class="absolute inset-0 w-full h-full bg-gradient-to-r from-medical-500/10 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                            <svg class="w-3.5 h-3.5 text-medical-400 inline group-hover:scale-110 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                                <line x1="8" y1="21" x2="16" y2="21"/>
+                                <line x1="12" y1="17" x2="12" y2="21"/>
+                            </svg>
+                            <span data-i18n="btn-desktop" class="relative z-10 font-bold tracking-wide">VISUALIZADOR DESKTOP (MAIN.PY)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sliders de Control Parametrizado -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <!-- Slider 1: Frecuencia -->
+                    <div class="bg-slate-950/40 p-4 rounded-xl border border-slate-900">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="slider-interval" class="text-xs font-bold text-slate-400 uppercase tracking-wider">Frecuencia de Inyección PoC</label>
+                            <span class="text-xs font-mono font-bold text-medical-500 bg-medical-950/20 px-2 py-0.5 rounded border border-medical-500/30" id="interval-display">5.0 seg</span>
+                        </div>
+                        <input type="range" id="slider-interval" min="1" max="15" value="5" step="1" oninput="updateInterval(this.value)" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-medical-500">
+                        <p class="text-[10px] text-slate-500 mt-1">Define la velocidad de peticiones POST /fhir/Observation realizadas por el biosensor.</p>
+                    </div>
+
+                    <!-- Slider 2: Ruido -->
+                    <div class="bg-slate-950/40 p-4 rounded-xl border border-slate-900">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="slider-noise" class="text-xs font-bold text-slate-400 uppercase tracking-wider">Ruido Eléctrico del Canal (Artefacto)</label>
+                            <span class="text-xs font-mono font-bold text-amber-500 bg-amber-950/20 px-2 py-0.5 rounded border border-amber-500/30" id="noise-display">Sin Ruido</span>
+                        </div>
+                        <input type="range" id="slider-noise" min="0" max="10" value="0" step="1" oninput="updateNoise(this.value)" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500">
+                        <p class="text-[10px] text-slate-500 mt-1">Inyecta ruido de red (50/60 Hz) o de movimiento para probar la tolerancia del CDSS y las alertas.</p>
+                    </div>
+                </div>
+
+                <!-- Botones de Inducción Fisiológica y Pruebas Médicas -->
+                <div class="relative">
+                    <span class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Inducir Escenarios de Triage (Modificación Fisiológica)</span>
+                    <div class="flex flex-wrap gap-2" id="clinical-state-controls">
+                        <!-- Se poblará dinámicamente mediante JS -->
+                    </div>
+                    
+                    <!-- LOCK OVERLAY FOR RBAC -->
+                    <div id="triage-rbac-lock" class="absolute inset-0 bg-slate-900/95 backdrop-blur-sm rounded-xl flex items-center justify-center gap-3 px-4 text-center hidden z-20">
+                        <svg class="w-5 h-5 text-yellow-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                        <span class="text-xs font-bold text-slate-300">Modificación fisiológica restringida. Requiere perfil Jefe de Servicio de Cardiología.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PACIENTE, CDSS ALERTS & PATIENT CONFIGURATOR -->
+            <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
+                <!-- EXPEDIENTE PACIENTE (HAPI FHIR Patient) -->
+                <div id="patient-card" class="bg-slate-900/40 rounded-xl p-5 border border-slate-900/60 flex flex-col justify-between h-full min-h-[220px] xl:col-span-1">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <h2 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Identificación Clínica</h2>
+                            <span class="text-[10px] text-slate-500 font-mono">Patient Resource</span>
+                        </div>
+                        <div class="mt-4 flex items-center gap-4">
+                            <div id="pat-avatar" class="w-14 h-14 bg-gradient-to-br from-medical-500 to-emerald-500 rounded-2xl flex items-center justify-center text-xl font-black text-slate-950 shadow-md">
+                                AU
+                            </div>
+                            <div>
+                                <h3 id="pat-name" class="text-md font-bold text-white">Cargando paciente...</h3>
+                                <p id="pat-gender-age" class="text-xs text-slate-400"></p>
+                                <p id="pat-email" class="text-xs text-slate-500 mt-0.5 font-mono"></p>
+                            </div>
+                        </div>
+                        
+                        <!-- SELECTOR DE PACIENTES REGISTRADOS EN POSTGRESQL -->
+                        <div class="mt-4 pt-3 border-t border-slate-800/60">
+                            <label for="select-active-patient" class="block text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Seleccionar Paciente de Base de Datos</label>
+                            <select id="select-active-patient" aria-label="Paciente Activo en el Monitor" title="Paciente Activo en el Monitor" onchange="changeActivePatient(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-300 focus:outline-none focus:border-medical-500 transition font-sans cursor-pointer">
+                                <option value="ander-patient">Dr. Ander Otxoa (Por Defecto)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-900/80 flex justify-between text-[10px] text-slate-400 font-mono">
+                        <div>
+                            <span class="block text-slate-500 uppercase text-[9px] font-bold">Organización</span>
+                            <span id="pat-org" class="font-medium text-slate-300">Osakidetza / Ph.D. Lab</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="block text-slate-500 uppercase text-[9px] font-bold">URI Recurso</span>
+                            <span id="pat-id" class="font-mono text-slate-300">Patient/ander-patient</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONFIGURADOR DE PACIENTES FHIR (RBAC CONTROLLED) -->
+                <div id="patient-configurator-card" class="bg-slate-900/40 rounded-xl p-5 border border-slate-900/60 flex flex-col justify-between relative min-h-[220px] xl:col-span-1">
+                    <div>
+                        <div class="flex justify-between items-start mb-3">
+                            <h2 class="text-xs font-bold uppercase text-slate-400 tracking-wider font-title">Registrar Paciente FHIR</h2>
+                            <span class="text-[10px] text-medical-500 font-mono">POST /Patient</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="text" id="cfg-name" placeholder="Nombre" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-medical-500 transition">
+                                <input type="text" id="cfg-lastname" placeholder="Apellidos" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-medical-500 transition">
+                            </div>
+                            <div class="grid grid-cols-3 gap-2">
+                                <input type="number" id="cfg-age" placeholder="Edad" min="1" max="110" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-medical-500 transition">
+                                <input type="number" id="cfg-weight" placeholder="Peso (kg)" min="5" max="200" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-medical-500 transition">
+                                <input type="number" id="cfg-height" placeholder="Altura (cm)" min="50" max="220" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-medical-500 transition">
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <select id="cfg-gender" aria-label="Género del paciente" title="Género del paciente" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-medical-500 transition">
+                                    <option value="male">Varón</option>
+                                    <option value="female">Mujer</option>
+                                    <option value="other">Otro</option>
+                                </select>
+                                <select id="cfg-pathology" aria-label="Patología del paciente" title="Patología del paciente" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-medical-500 transition font-sans">
+                                    <option value="none">Sin Patología</option>
+                                    <option value="hypertension">Hipertensión</option>
+                                    <option value="heart-failure">Insuf. Cardíaca</option>
+                                    <option value="copd">EPOC Crónica</option>
+                                    <option value="hiv">VIH Positivo</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="registerFhirPatient()" class="w-full mt-3 py-2 rounded-lg bg-medical-500 hover:bg-medical-600 text-slate-950 font-bold text-xs transition duration-200 uppercase tracking-wide">
+                        Registrar en Postgres
+                    </button>
+                    
+                    <!-- LOCK OVERLAY FOR RBAC -->
+                    <div id="configurator-rbac-lock" class="absolute inset-0 bg-slate-900/95 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center p-4 text-center hidden z-20">
+                        <svg class="w-5 h-5 text-yellow-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                        <span class="text-[10px] font-bold text-slate-300">Registro de pacientes bloqueado. Se requieren privilegios de Jefe de Servicio.</span>
+                    </div>
+                </div>
+
+                <!-- ALERTA ACTIVA CDSS (Triage Dinámico Reactivo) -->
+                <div id="triage-card" class="bg-slate-900/40 rounded-xl p-5 border border-slate-900/60 flex flex-col justify-between transition-all duration-300 xl:col-span-2">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <h2 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Soporte a la Decisión Clínica (CDSS Triage)</h2>
+                            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-950/80 border border-slate-800" id="triage-status-tag">NORMAL</span>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex items-start gap-4">
+                                <div id="triage-icon" class="p-2 bg-slate-950/60 rounded-xl border border-slate-900">
+                                    <!-- Icono SVG -->
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <h3 id="triage-title" class="text-md font-bold text-medical-500">Analizando telemetría...</h3>
+                                    <p id="triage-desc" class="text-xs text-slate-300 mt-1 leading-relaxed">Esperando primera lectura del servidor clínico HAPI FHIR...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="triage-action" class="mt-4 p-3 bg-slate-950/40 border border-slate-900 rounded-xl text-[10px] text-slate-400 flex items-center gap-2">
+                        <!-- Sugerencia metrológica -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISUALIZADOR DIGITAL DE TELEMETRÍA (DYNAMIC METRIC CARDS) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6" id="telemetry-cards-container">
+                <!-- Se poblará dinámicamente -->
+            </div>
+
+            <!-- MONITOR DE ELECTROCARDIOGRAMA (ECG/EKG) - EXCLUSIVO WELCH ALLYN -->
+            <div id="ecg-monitor-container" class="bg-slate-900/40 rounded-xl p-5 border border-slate-900/60 hidden transition-all duration-300">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> 
+                        <span>Osciloscopio Electrocardiográfico PoC (12-Lead EKG)</span>
+                    </h3>
+                    <div class="flex items-center gap-4 text-[10px]">
+                        <!-- Selectores de Modo de Visualización ECG -->
+                        <div class="flex gap-2 mr-2 border-r border-slate-800 pr-4">
+                            <button onclick="setEcgViewMode('offline_single')" id="btn-view-single" class="px-2 py-0.5 rounded border border-slate-700 bg-slate-800 text-slate-400 transition hover:bg-slate-700"><span id="btn-view-single">Offline (I)</span></button>
+                            <button onclick="setEcgViewMode('online_grid')" id="btn-view-grid" class="px-2 py-0.5 rounded border border-medical-500/50 bg-medical-950/40 text-medical-400 font-bold transition hover:bg-medical-900/40"><span id="btn-view-grid">12x1 Grid</span></button>
+                            <button onclick="setEcgViewMode('online_4x3')" id="btn-view-4x3" class="px-2 py-0.5 rounded border border-slate-700 bg-slate-800 text-slate-400 transition hover:bg-slate-700"><span id="btn-view-4x3">4x3+1</span></button>
+                        </div>
+                        <span class="text-slate-400 font-mono">Sensibilidad: <strong class="text-medical-500">10mm/mV</strong></span>
+                        <span class="text-slate-400 font-mono">Sweep: <strong class="text-medical-500">25mm/s</strong></span>
+                        <span class="px-2 py-0.5 rounded bg-emerald-950/40 border border-emerald-500/20 text-emerald-400 font-mono text-[9px] uppercase tracking-wider font-bold">Diagnóstico Activo</span>
+                    </div>
+                </div>
+                <div class="bg-slate-950/90 rounded-xl p-3 border border-slate-900 relative overflow-hidden flex flex-col md:flex-row gap-4 items-center">
+                    <div id="canvas-wrapper" class="flex-1 w-full h-[480px] relative bg-slate-950 rounded-lg border border-slate-900 overflow-hidden shadow-inner">
+                        <!-- Canvas ECG -->
+                        <canvas id="ecg-canvas" class="w-full h-full block z-10 relative"></canvas>
+                        <!-- Grid de fondo milimetrado -->
+                        <div class="absolute inset-0 bg-ecg-grid pointer-events-none opacity-20 z-0"></div>
+                    </div>
+                    <!-- Datos de Análisis de Intervalos (Diagnóstico) -->
+                    <div class="w-full md:w-[280px] bg-slate-900/50 rounded-lg p-3 border border-slate-900/60 flex flex-col justify-between h-[140px] z-10 text-[10px] font-mono text-slate-400">
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between border-b border-slate-950 pb-1">
+                                <span>Intervalo PR:</span>
+                                <span class="text-slate-200 font-bold" id="ecg-pr-val">0.16 s</span>
+                            </div>
+                            <div class="flex justify-between border-b border-slate-950 pb-1">
+                                <span>Complejo QRS:</span>
+                                <span class="text-slate-200 font-bold" id="ecg-qrs-val">0.08 s</span>
+                            </div>
+                            <div class="flex justify-between border-b border-slate-950 pb-1">
+                                <span>Intervalo QT:</span>
+                                <span class="text-slate-200 font-bold" id="ecg-qt-val">0.38 s</span>
+                            </div>
+                            <div class="flex justify-between border-b border-slate-950 pb-1">
+                                <span>Eje Eléctrico:</span>
+                                <span class="text-emerald-400 font-bold" id="ecg-axis-val">Normal (+58°)</span>
+                            </div>
+                        </div>
+                        <div class="bg-slate-950/60 p-1.5 rounded border border-slate-950 text-[8px] text-slate-400 leading-normal">
+                            <strong class="text-slate-300 block mb-0.5 uppercase">Análisis Clínico Automático:</strong>
+                            <span id="ecg-diagnostic-val">Sin arritmias detectadas. Ritmo sinusal regular.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRÁFICOS DE TRAZADO CLÍNICO EN TIEMPO REAL -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="charts-grid-container">
+                <!-- Gráficos dinámicos -->
+            </div>
+
+            <!-- LOG DE COMUNICACIÓN REST Y RED -->
+            <div class="bg-slate-900/40 rounded-xl p-5 border border-slate-900/60">
+                <div class="flex justify-between items-center border-b border-slate-900 pb-3 mb-3">
+                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                        <svg class="w-4 h-4 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
+                        </svg>
+                        <span><span id="telemetry-history-title">Historial de Peticiones y Conectividad REST/FHIR</span></span>
+                    </h3>
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="w-2 h-2 rounded-full bg-slate-700 animate-pulse" id="ping-indicator"></span>
+                        <span class="text-slate-400 font-mono text-[10px]" id="connection-status">Desconectado</span>
+                    </div>
+                </div>
+                <div class="bg-slate-950/80 rounded-xl p-4 font-mono text-[10px] text-slate-400 h-28 overflow-y-auto space-y-1 shadow-inner border border-slate-900" id="api-log">
+                    <div class="text-slate-600">// Inicializando comunicaciones con puerto 8081 y puerto 8080...</div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="bg-slate-950 border-t border-slate-900/60 py-3 px-6 text-center text-[10px] text-slate-500 font-mono flex-shrink-0">
+            Orquestador Clínico Interoperable HL7 FHIR R4 • Osakidetza Simulation Environment v5.0 • Euskadi (DAM Goierri Eskola)
+        </footer>
+
+    </div>
+
+    <!-- Módulos de Control y Comunicaciones Clínicas (Arquitectura Desacoplada) -->
+    <script src="js/i18n.js?v=7" defer></script>
+    <script src="js/audio.js?v=7" defer></script>
+    <script src="js/app.js?v=7" defer></script>
+    <script src="js/auth.js?v=7" defer></script>
+    <script src="js/api.js?v=7" defer></script>
+    <script src="js/cdss.js?v=7" defer></script>
+    <script src="js/ui.js?v=7" defer></script>
+</body>
+</html>

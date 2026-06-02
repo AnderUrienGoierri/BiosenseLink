@@ -1,0 +1,9 @@
+{
+  "appId": "com.osakidetza.simulationlab",
+  "appName": "Simulation Lab",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true
+  }
+}

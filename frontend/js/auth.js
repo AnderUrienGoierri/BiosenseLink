@@ -4,20 +4,29 @@
  */
 
 /**
- * Cambiar selección visual entre los perfiles clínicos (admin/nurse) en el Portal
+ * Cambiar selección visual entre los perfiles clínicos en el Portal (4 perfiles)
  */
 function selectAuthProfile(profileType) {
     activeProfile = profileType;
-    const btnAdmin = document.getElementById("profile-btn-admin");
-    const btnNurse = document.getElementById("profile-btn-nurse");
     
-    if (profileType === "admin") {
-        btnAdmin.className = "p-3 rounded-xl border transition-all text-left flex flex-col justify-between h-24 bg-slate-950/40 border-medical-500/30 text-medical-400 ring-2 ring-medical-500/10";
-        btnNurse.className = "p-3 rounded-xl border transition-all text-left flex flex-col justify-between h-24 bg-slate-950/20 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-400";
-    } else {
-        btnNurse.className = "p-3 rounded-xl border transition-all text-left flex flex-col justify-between h-24 bg-slate-950/40 border-medical-500/30 text-medical-400 ring-2 ring-medical-500/10";
-        btnAdmin.className = "p-3 rounded-xl border transition-all text-left flex flex-col justify-between h-24 bg-slate-950/20 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-400";
-    }
+    const profiles = ['admin', 'tutoria', 'medicina', 'enfermeria'];
+    const btnIds = {
+        'admin': 'profile-btn-admin',
+        'tutoria': 'profile-btn-tutor',
+        'medicina': 'profile-btn-doctor',
+        'enfermeria': 'profile-btn-nurse'
+    };
+    
+    profiles.forEach(p => {
+        const btn = document.getElementById(btnIds[p]);
+        if (!btn) return;
+        if (p === profileType) {
+            btn.className = "p-3 rounded-xl border transition-all text-left flex flex-col justify-between h-24 bg-slate-950/40 border-medical-500/30 text-medical-400 ring-2 ring-medical-500/10";
+        } else {
+            btn.className = "p-3 rounded-xl border transition-all text-left flex flex-col justify-between h-24 bg-slate-950/20 border-slate-800 text-slate-500 hover:border-slate-750 hover:text-slate-450";
+        }
+    });
+    
     document.getElementById("auth-pin").value = "";
     document.getElementById("auth-error-msg").classList.add("hidden");
 }
@@ -40,10 +49,9 @@ async function attemptLogin() {
         const data = await response.json();
         
         if (data.status === "ok") {
-            // Check if the returned role matches the selected activeProfile, unless it's an admin (sysadmin or chief)
-            if (activeProfile === "nurse" && data.role === "admin") {
-                // Allows an admin to log into a nurse console just fine, but we respect the selected view
-                activeProfile = "nurse";
+            // Check if the returned role matches the selected activeProfile, unless it's an admin or tutor
+            if ((activeProfile === "enfermeria" || activeProfile === "medicina") && (data.role === "admin" || data.role === "tutoria")) {
+                // Allows an admin/tutor to log into a restricted console just fine, but we respect the selected view
             } else {
                 activeProfile = data.role; // Assume the DB role
             }
@@ -108,14 +116,22 @@ function applyRBAC() {
     const triageLock = document.getElementById("triage-rbac-lock");
     const configLock = document.getElementById("configurator-rbac-lock");
     
-    if (role === "nurse") {
+    if (role === "nurse" || role === "enfermeria" || role === "medicina") {
         badge.className = "px-2 py-0.5 rounded bg-yellow-950 border border-yellow-500/20 text-yellow-400 font-mono text-[9px] font-bold uppercase tracking-wider";
-        badge.textContent = (typeof currentLang !== "undefined" && currentLang === "eu") ? "KONSULTA MODOA (ERIZAIN)" : "MODO CONSULTA (ENFERMERÍA)";
+        if (role === "medicina") {
+            badge.textContent = (typeof currentLang !== "undefined" && currentLang === "eu") ? "KONSULTA MODOA (MEDIKUA)" : "MODO CONSULTA (MEDICINA)";
+        } else {
+            badge.textContent = (typeof currentLang !== "undefined" && currentLang === "eu") ? "KONSULTA MODOA (ERIZAIN)" : "MODO CONSULTA (ENFERMERÍA)";
+        }
         if (triageLock) triageLock.classList.remove("hidden");
         if (configLock) configLock.classList.remove("hidden");
     } else {
         badge.className = "px-2 py-0.5 rounded bg-teal-950 border border-teal-500/20 text-teal-400 font-mono text-[9px] font-bold uppercase tracking-wider";
-        badge.textContent = (typeof currentLang !== "undefined" && currentLang === "eu") ? "KONTROL MODOA (ADMIN)" : "ACCESO TOTAL (JEFE DE SERVICIO)";
+        if (role === "tutoria") {
+            badge.textContent = (typeof currentLang !== "undefined" && currentLang === "eu") ? "KONTROL MODOA (TUTOREA)" : "MODO TUTOR (SIMULACIÓN)";
+        } else {
+            badge.textContent = (typeof currentLang !== "undefined" && currentLang === "eu") ? "KONTROL MODOA (ADMIN)" : "ACCESO TOTAL (JEFE DE SERVICIO)";
+        }
         if (triageLock) triageLock.classList.add("hidden");
         if (configLock) configLock.classList.add("hidden");
     }

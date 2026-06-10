@@ -3,14 +3,20 @@
 ======================================================================
 
 1. Panel de Control de pgAdmin (Acceso Web - Puerto 5050):
-   * Usuario (Email): clinical-admin@osakidetza.eus
-   * Contraseña:      ClinicalSecureAdmin2026!
+   * Usuario (Email): ander@example.com
+   * Contraseña:      admin_password
 
 2. Base de Datos PostgreSQL (Puerto 5432):
    * Usuario:         dbadmin
    * Contraseña:      SecuredHospitalPass2026!
    * Base de datos:   medical_platform
 
+3. phpMyAdmin - MySQL (Acceso Web - Puerto 8082):
+   * Usuario:         ander
+   * Contraseña:      ander_password
+   * Base de datos:   dev_db
+   * Root password:   root_password
+
 ======================================================================
- Guardado automáticamente el: 2026-06-02
+ Actualizado: 2026-06-04
 ======================================================================

@@ -24,10 +24,10 @@ graph TD
 ```
 
 ### 🇪🇸 Castellano / Español
-*   **[Ir al Índice en Español (docs/esp/INDEX.md)](file:///c:/Dev/05_Projects/Biomedical_IoMT/BiosenseLink/docs/esp/INDEX.md)**: Acceso completo a los 7 documentos técnicos sobre arquitectura, base de datos, simulación matemática de McSharry, integración HL7 FHIR R4, osciloscopio en Canvas HTML5 y guía de despliegue local de la suite.
+*   **[Ir al Índice en Español (docs/esp/INDEX.md)](file:///c:/Dev/05_Projects/Biomedical_IoMT/BiosenseLink/docs/esp/INDEX.md)**: Acceso completo a los 8 documentos técnicos sobre arquitectura, base de datos, simulación matemática de McSharry, integración HL7 FHIR R4, osciloscopio en Canvas HTML5, guía de despliegue local y control de accesos de la suite.
 
 ### 🇪🇺 Euskara / Vasco
-*   **[Euskarazko aurkibidera joan (docs/eus/AURKIBIDEA.md)](file:///c:/Dev/05_Projects/Biomedical_IoMT/BiosenseLink/docs/eus/AURKIBIDEA.md)**: Sarbide osoa arkitektura, datu-basea, McSharry simulazio matematikoa, HL7 FHIR R4 integrazioa, Canvas HTML5 osziloskopioa eta instalazio gida azaltzen duten 7 dokumentu teknikoetara.
+*   **[Euskarazko aurkibidera joan (docs/eus/AURKIBIDEA.md)](file:///c:/Dev/05_Projects/Biomedical_IoMT/BiosenseLink/docs/eus/AURKIBIDEA.md)**: Sarbide osoa arkitektura, datu-basea, McSharry simulazio matematikoa, HL7 FHIR R4 integrazioa, Canvas HTML5 osziloskopioa, instalazio gida eta erabiltzaileen kudeaketa azaltzen duten 8 dokumentu teknikoetara.
 
 ---
 

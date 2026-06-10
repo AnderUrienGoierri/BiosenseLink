@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: dev_db
+      MYSQL_USER: ander
+      MYSQL_PASSWORD: ander_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - biomed-net
+
+  phpmyadmin:
+    image: phpmyadmin:5.2
+    container_name: phpmyadmin_client
+    restart: always
+    environment:
+      PMA_ARBITRARY: 1
+      PMA_HOST: mysql
+    ports:
+      - "8082:80"
+    depends_on:
+      - mysql
+    networks:
+      - biomed-net
+
+volumes:
+  mysql_data:
+
+networks:
+  biomed-net:
+    external: true

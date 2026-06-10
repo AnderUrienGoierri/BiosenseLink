@@ -60,19 +60,37 @@
                 <!-- Selector de Perfiles -->
                 <div>
                     <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">Seleccionar Profesional</label>
-                    <div class="grid grid-cols-2 gap-3">
+                                        <div class="grid grid-cols-2 gap-3">
+                        <!-- Administrador -->
                         <button onclick="selectAuthProfile('admin')" id="profile-btn-admin" class="p-3 rounded-xl border transition-all text-left flex flex-col justify-between h-24 bg-slate-950/40 border-medical-500/30 text-medical-400 ring-2 ring-medical-500/10">
-                            <span class="w-8 h-8 bg-medical-500/10 rounded-lg flex items-center justify-center text-xs font-bold">AO</span>
+                            <span class="w-8 h-8 bg-medical-500/10 rounded-lg flex items-center justify-center text-[10px] font-bold">TI</span>
                             <div>
-                                <span class="block text-xs font-bold text-slate-200">Dr. Ander Otxoa</span>
-                                <span class="block text-[8px] text-slate-400 uppercase">Jefe de Cardiología</span>
+                                <span class="block text-xs font-bold text-slate-200">sysadmin</span>
+                                <span class="block text-[8px] text-slate-400 uppercase">Soporte TI / Ing. Biomédica</span>
                             </div>
                         </button>
-                        <button onclick="selectAuthProfile('nurse')" id="profile-btn-nurse" class="p-3 rounded-xl border transition-all text-left flex flex-col justify-between h-24 bg-slate-950/20 border-slate-800 text-slate-500 hover:border-slate-750 hover:text-slate-450">
-                            <span class="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center text-xs font-bold">AR</span>
+                        <!-- Tutor -->
+                        <button onclick="selectAuthProfile('tutoria')" id="profile-btn-tutor" class="p-3 rounded-xl border transition-all text-left flex flex-col justify-between h-24 bg-slate-950/20 border-slate-800 text-slate-500 hover:border-slate-750 hover:text-slate-450">
+                            <span class="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center text-[10px] font-bold">KA</span>
                             <div>
-                                <span class="block text-xs font-bold text-slate-300">Enf. Amaia Ruiz</span>
-                                <span class="block text-[8px] text-slate-500 uppercase">Enfermera de Guardia</span>
+                                <span class="block text-xs font-bold text-slate-300">Tutor_1</span>
+                                <span class="block text-[8px] text-slate-500 uppercase">Dr. Kepa Arana (Tutor)</span>
+                            </div>
+                        </button>
+                        <!-- Médico -->
+                        <button onclick="selectAuthProfile('medicina')" id="profile-btn-doctor" class="p-3 rounded-xl border transition-all text-left flex flex-col justify-between h-24 bg-slate-950/20 border-slate-800 text-slate-500 hover:border-slate-750 hover:text-slate-450">
+                            <span class="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center text-[10px] font-bold">AO</span>
+                            <div>
+                                <span class="block text-xs font-bold text-slate-300">Medikua_1</span>
+                                <span class="block text-[8px] text-slate-500 uppercase">Dr. Ander Otxoa</span>
+                            </div>
+                        </button>
+                        <!-- Enfermero -->
+                        <button onclick="selectAuthProfile('enfermeria')" id="profile-btn-nurse" class="p-3 rounded-xl border transition-all text-left flex flex-col justify-between h-24 bg-slate-950/20 border-slate-800 text-slate-500 hover:border-slate-750 hover:text-slate-450">
+                            <span class="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center text-[10px] font-bold">AR</span>
+                            <div>
+                                <span class="block text-xs font-bold text-slate-300">Erizaina_1</span>
+                                <span class="block text-[8px] text-slate-500 uppercase">Enf. Amaia Ruiz</span>
                             </div>
                         </button>
                     </div>
@@ -82,7 +100,7 @@
                 <div>
                     <div class="flex justify-between items-center mb-1">
                         <label for="auth-pin" class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Código PIN de Acceso</label>
-                        <span class="text-[8px] text-slate-500 font-mono" id="pin-hint">Ander PIN: 1234 | Amaia PIN: 5678</span>
+                        <span class="text-[8px] text-slate-500 font-mono" id="pin-hint">TI: 9999 | KA: 4321 | AO: 1234 | AR: 5678</span>
                     </div>
                     <input type="password" id="auth-pin" maxlength="4" placeholder="••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-center text-xl font-bold tracking-widest text-slate-100 placeholder-slate-700 focus:outline-none focus:border-medical-500 transition">
                 </div>
@@ -305,7 +323,7 @@
                             PAUSAR OBSERVACIONES
                         </button>
                         
-                        <!-- Bot�n Premium para Lanzar Visualizador Cl�nico Desktop -->
+                        <!-- Botn Premium para Lanzar Visualizador Clnico Desktop -->
                         <button onclick="runDesktopVisualizer()" id="btn-run-desktop" class="px-3 py-1.5 rounded-lg bg-medical-950/40 text-medical-400 border border-medical-500/30 text-xs font-bold transition hover:bg-medical-900/40 hover:text-medical-300 flex items-center gap-1.5 shadow-md shadow-medical-500/5 group relative overflow-hidden">
                             <span class="absolute inset-0 w-full h-full bg-gradient-to-r from-medical-500/10 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
                             <svg class="w-3.5 h-3.5 text-medical-400 inline group-hover:scale-110 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">

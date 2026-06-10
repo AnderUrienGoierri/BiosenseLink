@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: always
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks:
+      - biomed-net
+
+  homer:
+    image: b4bz/homer:latest
+    container_name: homer
+    restart: always
+    environment:
+      - INIT_ASSETS=1
+    ports:
+      - "8085:8080"
+    volumes:
+      - ./homer-dashboard-assets:/www/assets
+      - /etc/os-release:/www/assets/host-os-release:ro
+    networks:
+      - biomed-net
+
+volumes:
+  portainer_data:
+
+networks:
+  biomed-net:
+    name: biomed-net
+    driver: bridge

@@ -18,6 +18,7 @@ graph TD
     Index --> FHIR[docs/esp/4_FHIR_INTEGRATION.md]
     Index --> Front[docs/esp/5_FRONTEND_CONSOLE.md]
     Index --> Setup[docs/esp/6_SETUP_GUIDE.md]
+    Index --> Users[docs/esp/7_CLINICAL_USERS_AND_PATIENTS.md]
 
     style Index fill:#0284c7,stroke:#0369a1,stroke-width:2px,color:#fff
     style Arch fill:#0d9488,stroke:#0f766e,color:#fff
@@ -26,6 +27,7 @@ graph TD
     style FHIR fill:#2563eb,stroke:#1d4ed8,color:#fff
     style Front fill:#7c3aed,stroke:#6d28d9,color:#fff
     style Setup fill:#4b5563,stroke:#374151,color:#fff
+    style Users fill:#ea580c,stroke:#c2410c,color:#fff
 ```
 
 ### 1. [Arquitectura General e Interconexión (1_ARCHITECTURE_OVERVIEW.md)](file:///c:/Dev/05_Projects/Biomedical_IoMT/BiosenseLink/docs/esp/1_ARCHITECTURE_OVERVIEW.md)
@@ -56,6 +58,10 @@ graph TD
 ### 6. [Guía de Instalación y Puesta en Marcha (6_SETUP_GUIDE.md)](file:///c:/Dev/05_Projects/Biomedical_IoMT/BiosenseLink/docs/esp/6_SETUP_GUIDE.md)
 *   **Instalación Rápida**: Requisitos, entorno virtual Python y Docker.
 *   **Lanzador Maestro**: Uso de `Lanzar_BiosenseLink.ps1` y `Lanzar_BiosenseLink.bat` para el inicio unificado en un solo clic.
+
+### 7. [Usuarios Clínicos y Pacientes (7_CLINICAL_USERS_AND_PATIENTS.md)](file:///c:/Dev/05_Projects/Biomedical_IoMT/BiosenseLink/docs/esp/7_CLINICAL_USERS_AND_PATIENTS.md)
+*   **Usuarios en PostgreSQL**: Roles y PINs de acceso para inicio de sesión en el portal (Dr. Ander Otxoa, Enf. Amaia Ruiz, Administrador).
+*   **Gestión de Pacientes (HL7 FHIR)**: Carga del perfil predeterminado y alta en caliente de nuevos pacientes en el servidor HAPI FHIR.
 
 ---
 

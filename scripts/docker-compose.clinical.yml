@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  clinical-postgres-db:
+    image: postgres:15-alpine
+    container_name: clinical-postgres-db
+    restart: always
+    environment:
+      POSTGRES_USER: dbadmin
+      POSTGRES_PASSWORD: SecuredHospitalPass2026!
+      POSTGRES_DB: medical_platform
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_clinical_data:/var/lib/postgresql/data
+    networks:
+      - biomed-net
+
+  clinical-pgadmin-web:
+    image: dpage/pgadmin4
+    container_name: clinical-pgadmin-web
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ander@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin_password
+    ports:
+      - "5050:80"
+    depends_on:
+      - clinical-postgres-db
+    networks:
+      - biomed-net
+
+  hapi-fhir-server:
+    image: hapiproject/hapi:latest
+    container_name: hapi-fhir-server
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - spring.datasource.url=jdbc:postgresql://clinical-postgres-db:5432/medical_platform
+      - spring.datasource.username=dbadmin
+      - spring.datasource.password=SecuredHospitalPass2026!
+      - spring.datasource.driver-class-name=org.postgresql.Driver
+      - spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+      - hapi.fhir.fhir_version=R4
+    depends_on:
+      - clinical-postgres-db
+    networks:
+      - biomed-net
+
+volumes:
+  postgres_clinical_data:
+
+networks:
+  biomed-net:
+    external: true

@@ -424,15 +424,15 @@ function startPythonBackendWS() {
             if (typeof window.pushEcgSamples === 'function') window.pushEcgSamples(data);
         }
     };
-    window.pythonWS.onerror = (e) => { logMessage('Error WS. Comprueba que server.py está corriendo.', 'error'); };
+    window.pythonWS.onerror = (e) => { logMessage('Error WS. Comprueba que server.py estÃ¡ corriendo.', 'error'); };
     window.pythonWS.onclose = () => { logMessage('Desconectado del servidor Python.', 'warning'); };
 }
 
 /**
- * Lanzar visualizador de escritorio main.py desde la aplicación web
+ * Lanzar visualizador de escritorio main.py desde la aplicaciÃ³n web
  */
 async function runDesktopVisualizer() {
-    logMessage("Enviando orden de lanzamiento para el Visualizador Clínico Desktop...", "info");
+    logMessage("Enviando orden de lanzamiento para el Visualizador ClÃ­nico Desktop...", "info");
     try {
         const response = await fetch("http://localhost:8081/api/run-desktop-visualizer", {
             method: "POST"
@@ -440,7 +440,7 @@ async function runDesktopVisualizer() {
         if (!response.ok) throw new Error();
         const data = await response.json();
         if (data.status === "ok") {
-            logMessage("¡Visualizador Clínico Desktop lanzado con éxito!", "success");
+            logMessage("Â¡Visualizador ClÃ­nico Desktop lanzado con Ã©xito!", "success");
             if (typeof audioEngine !== 'undefined') {
                 audioEngine.playHeartbeat(880);
             }
@@ -448,7 +448,7 @@ async function runDesktopVisualizer() {
             throw new Error(data.message);
         }
     } catch (err) {
-        logMessage(`Fallo al lanzar el Visualizador Clínico: ${err.message || 'servidor desconectado'}`, "error");
+        logMessage(`Fallo al lanzar el Visualizador ClÃ­nico: ${err.message || 'servidor desconectado'}`, "error");
         if (typeof audioEngine !== 'undefined') {
             audioEngine.playHeartbeat(150);
         }

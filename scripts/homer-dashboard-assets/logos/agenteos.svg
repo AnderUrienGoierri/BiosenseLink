@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#0a0a1a"/>
+    </radialGradient>
+    <linearGradient id="arc" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00d2c4"/>
+      <stop offset="100%" stop-color="#8c52ff"/>
+    </linearGradient>
+  </defs>
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="48" fill="url(#bg)" stroke="url(#arc)" stroke-width="2"/>
+  <!-- Robot face -->
+  <rect x="28" y="30" width="44" height="36" rx="8" ry="8" fill="none" stroke="url(#arc)" stroke-width="2.5"/>
+  <!-- Eyes -->
+  <circle cx="40" cy="46" r="5" fill="#00d2c4" opacity="0.9"/>
+  <circle cx="60" cy="46" r="5" fill="#8c52ff" opacity="0.9"/>
+  <!-- Pupils glow -->
+  <circle cx="40" cy="46" r="2.5" fill="#ffffff" opacity="0.8"/>
+  <circle cx="60" cy="46" r="2.5" fill="#ffffff" opacity="0.8"/>
+  <!-- Mouth / data line -->
+  <line x1="38" y1="58" x2="62" y2="58" stroke="url(#arc)" stroke-width="2" stroke-linecap="round"/>
+  <line x1="44" y1="58" x2="44" y2="54" stroke="#00d2c4" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="50" y1="58" x2="50" y2="55" stroke="#8c52ff" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="56" y1="58" x2="56" y2="53" stroke="#00d2c4" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Antenna -->
+  <line x1="50" y1="30" x2="50" y2="22" stroke="url(#arc)" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="50" cy="20" r="3" fill="#00d2c4"/>
+  <!-- Ears / connectors -->
+  <rect x="20" y="40" width="8" height="14" rx="2" fill="none" stroke="#00d2c4" stroke-width="1.5" opacity="0.7"/>
+  <rect x="72" y="40" width="8" height="14" rx="2" fill="none" stroke="#8c52ff" stroke-width="1.5" opacity="0.7"/>
+  <!-- Bottom text area -->
+  <text x="50" y="82" font-family="monospace" font-size="6.5" fill="#94a3b8" text-anchor="middle" letter-spacing="1">AGENTE OS</text>
+</svg>

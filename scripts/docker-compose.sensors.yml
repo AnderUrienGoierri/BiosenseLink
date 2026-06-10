@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  sensing-server-1:
+    image: ruvnet/wifi-densepose:latest
+    container_name: sensing-server-1
+    restart: always
+    ports:
+      - "3030:3000"
+    networks:
+      - biomed-net
+
+  lamp-web:
+    image: php:8.2-apache
+    container_name: php_apache_server
+    restart: always
+    hostname: php-apache-server
+    ports:
+      - "8000:80"
+    volumes:
+      - ./web_html:/var/www/html
+      - /etc/os-release:/host-os-release:ro
+      - /proc/version:/host-proc-version:ro
+    environment:
+      - DOCKER_HOST_PLATFORM=auto
+    labels:
+      - "biomedical.service=apache"
+      - "biomedical.role=web"
+    networks:
+      - biomed-net
+
+networks:
+  biomed-net:
+    external: true

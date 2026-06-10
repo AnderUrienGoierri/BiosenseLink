@@ -9,7 +9,7 @@ const TRANSLATIONS = {
         "portal-desc": "Acceso de seguridad local mediante sincronización PostgreSQL",
         "pin-placeholder": "Ingrese PIN Clínico (ej. 1234)",
         "login-btn": "Iniciar Sesión",
-        "login-error": "PIN inválido o error en PostgreSQL. Intente 1234 (Dr. Ander) o 5678 (Enf. Amaia).",
+        "login-error": "PIN inválido o error en PostgreSQL. Intente 9999 (sysadmin), 4321 (Tutor_1), 1234 (Medikua_1) o 5678 (Erizaina_1).",
         
         "rbac-badge-admin": "MODO CONTROL (ADMIN)",
         "rbac-badge-nurse": "MODO CONSULTA (ERIZAIN)",
@@ -74,7 +74,7 @@ const TRANSLATIONS = {
         "portal-desc": "Tokiko segurtasun-sarbidea PostgreSQL sinkronizazio bidez",
         "pin-placeholder": "Sartu PIN klinikoa (adib. 1234)",
         "login-btn": "Saioa Hasi",
-        "login-error": "PIN baliogabea edo errorea PostgreSQL-n. Saiatu 1234 (Ander Dr.) edo 5678 (Amaia Eriz.).",
+        "login-error": "PIN baliogabea edo errorea PostgreSQL-n. Saiatu 9999 (sysadmin), 4321 (Tutor_1), 1234 (Medikua_1) edo 5678 (Erizaina_1).",
         
         "rbac-badge-admin": "KONTROL MODOA (ADMIN)",
         "rbac-badge-nurse": "KONSULTA MODOA (ERIZAIN)",

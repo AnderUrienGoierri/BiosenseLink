@@ -4,6 +4,13 @@ import os
 import logging
 import psycopg2
 import sys
+import io
+
+# Forzar UTF-8 en stdout/stderr para compatibilidad con Windows (CP1252 no soporta emojis)
+if sys.stdout.encoding and sys.stdout.encoding.upper() != 'UTF-8':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+if sys.stderr.encoding and sys.stderr.encoding.upper() != 'UTF-8':
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 import subprocess
 import urllib.request
 import random
@@ -515,8 +522,8 @@ async def continuous_vitals_simulator():
 
 @app.on_event("startup")
 async def startup_event():
-    print("\033[92m✔️ Servidor HTTP de control interactivo activo en: http://localhost:8081/api/control\033[0m")
-    print("\033[32m🔌 Capa de telemetría e inyección activa hacia HAPI FHIR en el puerto 8080.\033[0m")
+    print("\033[92m[OK] Servidor HTTP de control interactivo activo en: http://localhost:8081/api/control\033[0m")
+    print("\033[32m[ON] Capa de telemetria e inyeccion activa hacia HAPI FHIR en el puerto 8080.\033[0m")
     # Lanzar la tarea asíncrona en el loop de FastAPI
     asyncio.create_task(continuous_vitals_simulator())
 
@@ -758,6 +765,9 @@ app.mount("/", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "..
 
 if __name__ == "__main__":
     import uvicorn
+    # Forzar UTF-8 también en el proceso hijo del reloader
+    os.environ["PYTHONUTF8"] = "1"
+    os.environ["PYTHONIOENCODING"] = "utf-8"
     # Lanzar servidor en el puerto 8081 para que encaje con el frontend
     logger.info("Iniciando motor BiosenseLink IoMT Backend en Puerto 8081...")
     uvicorn.run("server:app", host="0.0.0.0", port=8081, reload=True)

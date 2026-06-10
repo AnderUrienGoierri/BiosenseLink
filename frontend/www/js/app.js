@@ -56,6 +56,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (user) {
         document.getElementById("auth-portal").classList.add("opacity-0", "pointer-events-none");
         applyRBAC();
+        if (typeof startPythonBackendWS === 'function') startPythonBackendWS();
     } else {
         document.getElementById("auth-portal").classList.remove("opacity-0", "pointer-events-none");
     }

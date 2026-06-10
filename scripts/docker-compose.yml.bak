@@ -1,0 +1,209 @@
+version: '3.8'
+
+services:
+  # ----------------------------------------------------------------------------
+  # PostgreSQL Clínico (Base de datos para BiosenseLink e IoMT)
+  # ----------------------------------------------------------------------------
+  clinical-postgres-db:
+    image: postgres:15-alpine
+    container_name: clinical-postgres-db
+    restart: always
+    environment:
+      POSTGRES_USER: dbadmin
+      POSTGRES_PASSWORD: SecuredHospitalPass2026!
+      POSTGRES_DB: medical_platform
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_clinical_data:/var/lib/postgresql/data
+
+  # pgAdmin (Administrador Web de PostgreSQL) - http://localhost:5050
+  clinical-pgadmin-web:
+    image: dpage/pgadmin4
+    container_name: clinical-pgadmin-web
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ander@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin_password
+    ports:
+      - "5050:80"
+    depends_on:
+      - clinical-postgres-db
+
+  # ----------------------------------------------------------------------------
+  # Servidor HL7 FHIR R4 (HAPI FHIR Starter) - http://localhost:8080
+  # ----------------------------------------------------------------------------
+  hapi-fhir-server:
+    image: hapiproject/hapi:latest
+    container_name: hapi-fhir-server
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - spring.datasource.url=jdbc:postgresql://clinical-postgres-db:5432/medical_platform
+      - spring.datasource.username=dbadmin
+      - spring.datasource.password=SecuredHospitalPass2026!
+      - spring.datasource.driver-class-name=org.postgresql.Driver
+      - spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+      - hapi.fhir.fhir_version=R4
+    depends_on:
+      - clinical-postgres-db
+
+  # ----------------------------------------------------------------------------
+  # Gotenberg (Conversor de documentos / Reportes PDF clínicos) - http://localhost:3000
+  # ----------------------------------------------------------------------------
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    container_name: gotenberg
+    restart: always
+    ports:
+      - "3000:3000"
+
+  # ----------------------------------------------------------------------------
+  # Sensing Server (Servidor de telemetría WiFi para sensores) - http://localhost:3030
+  # ----------------------------------------------------------------------------
+  sensing-server-1:
+    image: ruvnet/wifi-densepose:latest
+    container_name: sensing-server-1
+    restart: always
+    ports:
+      - "3030:3000"
+
+  # ----------------------------------------------------------------------------
+  # n8n Workflow Automation Tool - http://localhost:5678
+  # ----------------------------------------------------------------------------
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n_automation
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - GENERIC_TIMEZONE=Europe/Madrid
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+  # ----------------------------------------------------------------------------
+  # MySQL Database (General)
+  # ----------------------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: dev_db
+      MYSQL_USER: ander
+      MYSQL_PASSWORD: ander_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  # phpMyAdmin (Administrador Web de MySQL) - http://localhost:8082
+  phpmyadmin:
+    image: phpmyadmin:5.2
+    container_name: phpmyadmin_client
+    restart: always
+    environment:
+      PMA_ARBITRARY: 1
+      PMA_HOST: mysql
+    ports:
+      - "8082:80"
+    depends_on:
+      - mysql
+
+  # ----------------------------------------------------------------------------
+  # Servidor Apache + PHP 8.2 (Servidor Web) - http://localhost:8000
+  # El código HTML/PHP se coloca en la subcarpeta ./web_html en local
+  # ----------------------------------------------------------------------------
+  lamp-web:
+    image: php:8.2-apache
+    container_name: php_apache_server
+    restart: always
+    hostname: php-apache-server
+    ports:
+      - "8000:80"
+    volumes:
+      - ./web_html:/var/www/html
+      - /etc/os-release:/host-os-release:ro
+      - /proc/version:/host-proc-version:ro
+    environment:
+      - DOCKER_HOST_PLATFORM=auto
+    labels:
+      - "biomedical.service=apache"
+      - "biomedical.role=web"
+
+  # ----------------------------------------------------------------------------
+  # Portainer CE (Dashboard de Administración de Docker) - http://localhost:9000
+  # ----------------------------------------------------------------------------
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: always
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+
+  # ----------------------------------------------------------------------------
+  # Paperless-ngx (Gestor de Documentos Digitales) - http://localhost:8010
+  # ----------------------------------------------------------------------------
+  paperless-redis:
+    image: redis:7-alpine
+    container_name: paperless-redis
+    restart: always
+    volumes:
+      - redis_data:/data
+
+  paperless-webserver:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    container_name: paperless_webserver
+    restart: always
+    depends_on:
+      - paperless-redis
+    ports:
+      - "8010:8000"
+    volumes:
+      - paperless_data:/usr/src/paperless/data
+      - paperless_media:/usr/src/paperless/media
+      - paperless_export:/usr/src/paperless/export
+      - paperless_consume:/usr/src/paperless/consume
+    environment:
+      PAPERLESS_REDIS: redis://paperless-redis:6379
+      PAPERLESS_TIME_ZONE: Europe/Madrid
+      PAPERLESS_OCR_LANGUAGE: spa+eng+deu+fra+rus+jpn+chi_sim+chi_tra
+      PAPERLESS_OCR_LANGUAGES: deu fra rus jpn chi-sim chi-tra
+      USERMAP_UID: 1000
+      USERMAP_GID: 1000
+      PAPERLESS_SECRET_KEY: "change-this-to-something-secure-key"
+
+  # ----------------------------------------------------------------------------
+  # Homer (Portal y Dashboard de Enlaces) - http://localhost:8085
+  # ----------------------------------------------------------------------------
+  homer:
+    image: b4bz/homer:latest
+    container_name: homer
+    restart: always
+    environment:
+      - INIT_ASSETS=1
+    ports:
+      - "8085:8080"
+    volumes:
+      - ./homer-dashboard-assets:/www/assets
+      - /etc/os-release:/www/assets/host-os-release:ro
+
+volumes:
+  postgres_clinical_data:
+  mysql_data:
+  n8n_data:
+  portainer_data:
+  redis_data:
+  paperless_data:
+  paperless_media:
+  paperless_export:
+  paperless_consume:

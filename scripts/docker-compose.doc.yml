@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    container_name: gotenberg
+    restart: always
+    ports:
+      - "3000:3000"
+    networks:
+      - biomed-net
+
+  paperless-redis:
+    image: redis:7-alpine
+    container_name: paperless-redis
+    restart: always
+    volumes:
+      - redis_data:/data
+    networks:
+      - biomed-net
+
+  paperless-webserver:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    container_name: paperless_webserver
+    restart: always
+    depends_on:
+      - paperless-redis
+    ports:
+      - "8010:8000"
+    volumes:
+      - paperless_data:/usr/src/paperless/data
+      - paperless_media:/usr/src/paperless/media
+      - paperless_export:/usr/src/paperless/export
+      - paperless_consume:/usr/src/paperless/consume
+    environment:
+      PAPERLESS_REDIS: redis://paperless-redis:6379
+      PAPERLESS_TIME_ZONE: Europe/Madrid
+      PAPERLESS_OCR_LANGUAGE: spa+eng+deu+fra+rus+jpn+chi_sim+chi_tra
+      PAPERLESS_OCR_LANGUAGES: deu fra rus jpn chi-sim chi-tra
+      USERMAP_UID: 1000
+      USERMAP_GID: 1000
+      PAPERLESS_SECRET_KEY: "change-this-to-something-secure-key"
+    networks:
+      - biomed-net
+
+volumes:
+  redis_data:
+  paperless_data:
+  paperless_media:
+  paperless_export:
+  paperless_consume:
+
+networks:
+  biomed-net:
+    external: true

@@ -530,8 +530,102 @@ async def startup_event():
 
 # --- ENDPOINTS REST ---
 
+# --- ENDPOINTS CONTROL HOMER DOCKER ---
+@app.get("/api/homer/status")
+async def get_homer_status():
+    try:
+        process = await asyncio.create_subprocess_exec(
+            "docker", "inspect", "-f", "{{.State.Status}}", "homer",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        stdout, stderr = await process.communicate()
+        if process.returncode == 0:
+            status = stdout.decode().strip()
+            return {"status": "ok", "container_status": status}
+        else:
+            return {"status": "error", "message": stderr.decode().strip(), "container_status": "not_found"}
+    except Exception as e:
+        return {"status": "error", "message": str(e), "container_status": "error"}
+
+@app.post("/api/homer/start")
+async def start_homer_container():
+    try:
+        process = await asyncio.create_subprocess_exec(
+            "docker", "start", "homer",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        stdout, stderr = await process.communicate()
+        if process.returncode == 0:
+            return {"status": "ok", "message": "Homer iniciado con éxito"}
+        else:
+            return {"status": "error", "message": stderr.decode().strip()}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/homer/stop")
+async def stop_homer_container():
+    try:
+        process = await asyncio.create_subprocess_exec(
+            "docker", "stop", "homer",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        stdout, stderr = await process.communicate()
+        if process.returncode == 0:
+            return {"status": "ok", "message": "Homer detenido con éxito"}
+        else:
+            return {"status": "error", "message": stderr.decode().strip()}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+db_connection_allowed = True
+
+@app.get("/api/db/status")
+async def get_db_status():
+    global db_connection_allowed
+    import psycopg2
+    try:
+        # Intentar conectar para verificar disponibilidad real
+        conn = psycopg2.connect(
+            host='localhost', 
+            port=5432, 
+            user='dbadmin', 
+            password='SecuredHospitalPass2026!', 
+            dbname='medical_platform',
+            connect_timeout=2
+        )
+        conn.close()
+        db_available = True
+        details = "Base de datos PostgreSQL en puerto 5432 disponible."
+    except Exception as e:
+        db_available = False
+        details = str(e)
+        
+    return {
+        "status": "ok",
+        "db_available": db_available,
+        "db_connection_allowed": db_connection_allowed,
+        "details": details
+    }
+
+@app.post("/api/db/connect")
+async def post_db_connect():
+    global db_connection_allowed
+    db_connection_allowed = True
+    return {"status": "ok", "db_connection_allowed": True}
+
+@app.post("/api/db/disconnect")
+async def post_db_disconnect():
+    global db_connection_allowed
+    db_connection_allowed = False
+    return {"status": "ok", "db_connection_allowed": False}
+
 @app.post("/api/auth")
 async def authenticate(req: LoginRequest):
+    global db_connection_allowed
+    if not db_connection_allowed:
+        return {"status": "error", "message": "Conexión a la base de datos deshabilitada por el administrador."}
     try:
         conn = psycopg2.connect(host='localhost', port=5432, user='dbadmin', password='SecuredHospitalPass2026!', dbname='medical_platform')
         cursor = conn.cursor()
@@ -679,6 +773,39 @@ async def config_patient(req: PatientConfigRequest):
     
     return {"status": "ok", "message": f"Paciente {req.name} sincronizado"}
 
+@app.post("/api/run-launcher")
+async def run_launcher():
+    """Ejecuta Lanzar_BiosenseLink.sh en un terminal visible en Linux."""
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        sh_path = os.path.join(base_dir, "../Lanzar_BiosenseLink.sh")
+        abs_sh_path = os.path.abspath(sh_path)
+        logger.info(f"Ejecutando lanzador desde: {abs_sh_path}")
+        
+        # Detect available terminal emulators in order of preference
+        terminals = [
+            ["kitty", "--title", "BiosenseLink Telemetría IoMT", "bash", abs_sh_path],
+            ["alacritty", "--title", "BiosenseLink Telemetría IoMT", "-e", "bash", abs_sh_path],
+            ["konsole", "--title", "BiosenseLink Telemetría IoMT", "-e", "bash", abs_sh_path],
+            ["gnome-terminal", "--title", "BiosenseLink Telemetría IoMT", "--", "bash", abs_sh_path],
+            ["xterm", "-title", "BiosenseLink Telemetría IoMT", "-e", "bash", abs_sh_path],
+        ]
+        
+        import shutil
+        for term_args in terminals:
+            if shutil.which(term_args[0]):
+                subprocess.Popen(term_args, cwd=os.path.dirname(abs_sh_path), close_fds=True,
+                                 start_new_session=True)
+                return {"status": "ok", "message": f"Lanzador iniciado en terminal {term_args[0]}"}
+        
+        # Fallback: run in background without terminal
+        subprocess.Popen(["bash", abs_sh_path], cwd=os.path.dirname(abs_sh_path), close_fds=True,
+                         start_new_session=True)
+        return {"status": "ok", "message": "Lanzador iniciado (sin terminal visual)"}
+    except Exception as e:
+        logger.error(f"Error al ejecutar lanzador: {e}")
+        return {"status": "error", "message": str(e)}
+
 @app.post("/api/run-desktop-visualizer")
 async def run_desktop_visualizer():
     """Ejecuta el visualizador de escritorio main.py en segundo plano en la PC."""
@@ -692,6 +819,235 @@ async def run_desktop_visualizer():
     except Exception as e:
         logger.error(f"Error iniciando visualizador de escritorio: {e}")
         return {"status": "error", "message": str(e)}
+
+@app.post("/api/gosasun/launch")
+async def launch_gosasun():
+    """Ejecuta la aplicación de escritorio GOsasun (C#) en segundo plano."""
+    try:
+        exe_path = r"C:\Dev\05_Projects\Goierri_MAD\PROGRAMAZIOA\C\proiektuak\GOsasun_app\publish\win-x64\GOsasun_app.exe"
+        logger.info(f"Lanzando GOsasun App desde: {exe_path}")
+        
+        if not os.path.exists(exe_path):
+            return {"status": "error", "message": f"No se encontró el ejecutable en {exe_path}"}
+            
+        subprocess.Popen([exe_path], cwd=os.path.dirname(exe_path), close_fds=True)
+        return {"status": "ok", "message": "GOsasun App iniciada correctamente"}
+    except Exception as e:
+        logger.error(f"Error iniciando GOsasun App: {e}")
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/mysql-workbench/launch")
+async def launch_mysql_workbench():
+    """Ejecuta MySQL Workbench en segundo plano si está instalado en la ruta predeterminada."""
+    try:
+        paths = [
+            r"C:\Program Files\MySQL\MySQL Workbench 8.0\MySQLWorkbench.exe",
+            r"C:\Program Files\MySQL\MySQL Workbench 8.0 CE\MySQLWorkbench.exe"
+        ]
+        exe_path = None
+        for p in paths:
+            if os.path.exists(p):
+                exe_path = p
+                break
+                
+        if not exe_path:
+            return {"status": "error", "message": "No se encontró MySQL Workbench en las rutas predeterminadas"}
+            
+        logger.info(f"Lanzando MySQL Workbench desde: {exe_path}")
+        subprocess.Popen([exe_path], cwd=os.path.dirname(exe_path), close_fds=True)
+        return {"status": "ok", "message": "MySQL Workbench iniciado"}
+    except Exception as e:
+        logger.error(f"Error iniciando MySQL Workbench: {e}")
+        return {"status": "error", "message": str(e)}
+
+
+import httpx
+import urllib.parse
+from fastapi import Request, Response
+
+@app.get("/api/proxy")
+async def web_proxy(request: Request, url: str):
+    """
+    Proxy que obtiene el contenido de una URL externa o local,
+    elimina las cabeceras que bloquean el iframe (X-Frame-Options, CSP)
+    e inyecta la etiqueta <base href="..."> y un script para notificar
+    el éxito de carga al dashboard de Homer.
+    """
+    raw_query = request.url.query
+    if "url=" in raw_query:
+        target_url = raw_query.split("url=", 1)[1]
+        target_url = urllib.parse.unquote(target_url)
+    else:
+        target_url = url
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+
+    try:
+        # Desactivamos verificación SSL para Cockpit y otros servicios locales autoprofirmados
+        async with httpx.AsyncClient(verify=False) as client:
+            resp = await client.get(target_url, headers=headers, follow_redirects=True, timeout=10.0)
+    except Exception as e:
+        logger.error(f"Error en proxy al conectar con {target_url}: {e}")
+        return Response(
+            content=f"<h3>Error de Conexión en el Proxy</h3><p>No se pudo conectar con <b>{target_url}</b>.</p><p>Detalle: {str(e)}</p>",
+            status_code=502,
+            media_type="text/html"
+        )
+
+    content_type = resp.headers.get("content-type", "")
+    body = resp.content
+
+    # Si la respuesta es HTML, inyectamos la etiqueta <base> y el script de notificación de carga
+    if "text/html" in content_type:
+        try:
+            html = resp.text
+            final_url = str(resp.url)
+            base_tag = f'<base href="{final_url}"><style>html {{ display: block !important; }}</style>'
+            
+            parsed = urllib.parse.urlparse(final_url)
+            target_origin = f"{parsed.scheme}://{parsed.netloc}"
+            ws_scheme = "wss" if parsed.scheme == "https" else "ws"
+            target_ws_origin = f"{ws_scheme}://{parsed.netloc}"
+            
+            interceptor_script = f"""
+<script>
+  (function() {{
+    const targetOrigin = '{target_origin}';
+    const targetWsOrigin = '{target_ws_origin}';
+    
+    // Interceptar fetch
+    const originalFetch = window.fetch;
+    window.fetch = function(input, init) {{
+      let url = typeof input === 'string' ? input : (input instanceof Request ? input.url : '');
+      if (url) {{
+        if (url.startsWith('/')) {{
+          url = targetOrigin + url;
+        }} else if (url.startsWith('http://localhost:8081/')) {{
+          url = url.replace('http://localhost:8081', targetOrigin);
+        }} else if (url.startsWith('http://127.0.0.1:8081/')) {{
+          url = url.replace('http://127.0.0.1:8081', targetOrigin);
+        }}
+        if (typeof input === 'string') {{
+          input = url;
+        }} else if (input instanceof Request) {{
+          input = new Request(url, input);
+        }}
+      }}
+      return originalFetch(input, init);
+    }};
+    
+    // Interceptar XMLHttpRequest (XHR)
+    const OriginalXHR = window.XMLHttpRequest;
+    window.XMLHttpRequest = function() {{
+      const xhr = new OriginalXHR();
+      const originalOpen = xhr.open;
+      xhr.open = function(method, url, ...args) {{
+        if (typeof url === 'string') {{
+          if (url.startsWith('/')) {{
+            url = targetOrigin + url;
+          }} else if (url.startsWith('http://localhost:8081/')) {{
+            url = url.replace('http://localhost:8081', targetOrigin);
+          }} else if (url.startsWith('http://127.0.0.1:8081/')) {{
+            url = url.replace('http://127.0.0.1:8081', targetOrigin);
+          }}
+        }}
+        return originalOpen.call(this, method, url, ...args);
+      }};
+      return xhr;
+    }};
+    
+    // Interceptar WebSocket
+    const OriginalWebSocket = window.WebSocket;
+    window.WebSocket = function(url, protocols) {{
+      if (typeof url === 'string') {{
+        if (url.startsWith('/')) {{
+          url = targetWsOrigin + url;
+        }} else if (url.startsWith('ws://localhost:8081/')) {{
+          url = url.replace('ws://localhost:8081', targetWsOrigin);
+        }} else if (url.startsWith('wss://localhost:8081/')) {{
+          url = url.replace('wss://localhost:8081', targetWsOrigin);
+        }} else if (url.startsWith('ws://127.0.0.1:8081/')) {{
+          url = url.replace('ws://127.0.0.1:8081', targetWsOrigin);
+        }} else if (url.startsWith('wss://127.0.0.1:8081/')) {{
+          url = url.replace('wss://127.0.0.1:8081', targetWsOrigin);
+        }}
+        
+        // Ajustar el puerto para el WebSocket de sensing si es necesario
+        if (url.includes('/ws/sensing')) {{
+          url = url.replace(':3030/ws/sensing', ':3031/ws/sensing')
+                   .replace(':3000/ws/sensing', ':3001/ws/sensing')
+                   .replace(':8080/ws/sensing', ':8765/ws/sensing');
+        }}
+      }}
+      return new OriginalWebSocket(url, protocols);
+    }};
+    window.WebSocket.prototype = OriginalWebSocket.prototype;
+  }})();
+</script>
+"""
+            combined_tag = base_tag + interceptor_script
+            
+            # Script inline que envía un mensaje postMessage al padre (Homer Dashboard) al cargar con éxito
+            status_script = """
+<script>
+  try {
+    if (window.parent) {
+      window.parent.postMessage({ type: 'iframe_load_status', status: 'success' }, '*');
+    }
+  } catch (e) {
+    console.error("Error al enviar estado de carga del iframe:", e);
+  }
+</script>
+"""
+            # Insertar base_tag e interceptor_script en <head>
+            if "<head>" in html:
+                html = html.replace("<head>", f"<head>{combined_tag}", 1)
+            elif "<HEAD>" in html:
+                html = html.replace("<HEAD>", f"<HEAD>{combined_tag}", 1)
+            elif "<html>" in html:
+                html = html.replace("<html>", f"<html>{combined_tag}", 1)
+            elif "<HTML>" in html:
+                html = html.replace("<HTML>", f"<HTML>{combined_tag}", 1)
+            else:
+                html = combined_tag + html
+                
+            # Insertar status_script antes de </body> o al final del archivo
+            if "</body>" in html:
+                html = html.replace("</body>", f"{status_script}</body>", 1)
+            elif "</BODY>" in html:
+                html = html.replace("</BODY>", f"{status_script}</BODY>", 1)
+            else:
+                html = html + status_script
+                
+            body = html.encode("utf-8")
+        except Exception as e:
+            logger.error(f"Error al procesar HTML en proxy para {target_url}: {e}")
+
+    # Limpiar cabeceras de respuesta conflictivas
+    exclude_headers = {
+        "content-length",
+        "content-encoding",
+        "transfer-encoding",
+        "x-frame-options",
+        "content-security-policy",
+        "x-content-security-policy",
+        "connection",
+        "keep-alive"
+    }
+    
+    resp_headers = {}
+    for k, v in resp.headers.items():
+        if k.lower() not in exclude_headers:
+            resp_headers[k] = v
+
+    return Response(
+        content=body,
+        status_code=resp.status_code,
+        headers=resp_headers,
+        media_type=content_type
+    )
 
 
 # --- ENDPOINTS WEBSOCKET ---

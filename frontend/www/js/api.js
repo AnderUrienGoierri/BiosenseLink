@@ -19,12 +19,21 @@ async function sendControlRequest(params) {
         document.getElementById("noise-display").textContent = noiseText;
         document.getElementById("slider-noise").value = data.noise;
         
+        const playBtn = document.getElementById("btn-play-sim");
+        const stopBtn = document.getElementById("btn-stop-sim");
+        
         if (data.is_paused) {
-            document.getElementById("btn-power-on").className = "px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 border border-slate-700 text-xs font-bold transition hover:bg-slate-700 flex items-center gap-1.5";
+            document.getElementById("btn-power-on").className = "px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 border border-slate-700 text-xs font-bold transition hover:bg-slate-700 flex items-center gap-1.5 select-none";
             document.getElementById("btn-power-on").innerHTML = "🔴 FUERA DE LÍNEA";
+            
+            if (playBtn) playBtn.className = "px-3 py-1.5 rounded-lg bg-slate-850 text-slate-400 border border-slate-700 text-xs font-bold transition hover:bg-slate-800 hover:text-slate-300 flex items-center gap-1.5 active:scale-95 duration-200";
+            if (stopBtn) stopBtn.className = "px-3 py-1.5 rounded-lg bg-red-950/40 text-red-400 border border-red-500/30 text-xs font-bold transition hover:bg-red-900/40 hover:text-red-300 flex items-center gap-1.5 shadow-md shadow-red-500/10 active:scale-95 duration-200";
         } else {
-            document.getElementById("btn-power-on").className = "px-3 py-1.5 rounded-lg bg-emerald-950/40 text-emerald-400 border border-emerald-500/20 text-xs font-bold transition hover:bg-emerald-900/30 flex items-center gap-1.5";
+            document.getElementById("btn-power-on").className = "px-3 py-1.5 rounded-lg bg-emerald-950/40 text-emerald-400 border border-emerald-500/20 text-xs font-bold flex items-center gap-1.5 select-none";
             document.getElementById("btn-power-on").innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span> TRANSMITIENDO`;
+            
+            if (playBtn) playBtn.className = "px-3 py-1.5 rounded-lg bg-emerald-950/40 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition hover:bg-emerald-900/40 hover:text-emerald-300 flex items-center gap-1.5 shadow-md shadow-emerald-500/10 active:scale-95 duration-200";
+            if (stopBtn) stopBtn.className = "px-3 py-1.5 rounded-lg bg-slate-850 text-slate-400 border border-slate-700 text-xs font-bold transition hover:bg-slate-800 hover:text-slate-300 flex items-center gap-1.5 active:scale-95 duration-200";
         }
 
         document.getElementById("ping-indicator").className = "w-2 h-2 rounded-full bg-emerald-500 animate-ping";
@@ -49,21 +58,63 @@ async function sendControlAction(action) {
 }
 
 /**
- * Cambiar el intervalo de muestreo en caliente
+ * Funciones para iniciar y detener la simulación desde PLAY / STOP
+ */
+async function playSimulation() {
+    logMessage("Reanudando/Iniciando simulación fisiológica...", "success");
+    await sendControlAction('resume');
+    if (typeof restartPolling === 'function') restartPolling();
+}
+
+async function stopSimulation() {
+    logMessage("Deteniendo simulación fisiológica...", "error");
+    await sendControlAction('pause');
+    if (typeof stopPolling === 'function') stopPolling();
+    
+    // Resetear a 0 todos los displays del dispositivo activo
+    if (typeof activeDevice !== 'undefined' && typeof DEVICES_DATABASE !== 'undefined') {
+        const dev = DEVICES_DATABASE[activeDevice];
+        if (dev) {
+            dev.metrics.forEach(m => {
+                const disp = document.getElementById(`display-val-${m.code}`);
+                if (disp) {
+                    disp.textContent = "0.00";
+                }
+            });
+        }
+    }
+}
+
+/**
+ * Actualizar visualmente la etiqueta de intervalo
+ */
+function updateIntervalDisplay(val) {
+    document.getElementById("interval-display").textContent = `${parseFloat(val).toFixed(1)} seg`;
+}
+
+/**
+ * Cambiar el intervalo de muestreo en caliente y notificar al backend
  */
 async function updateInterval(val) {
-    document.getElementById("interval-display").textContent = `${parseFloat(val).toFixed(1)} seg`;
-    pollingIntervalSec = parseInt(val);
-    restartPolling();
+    updateIntervalDisplay(val);
+    pollingIntervalSec = parseFloat(val);
+    if (typeof restartPolling === 'function') restartPolling();
     await sendControlRequest(`interval=${val}`);
+}
+
+/**
+ * Actualizar visualmente la etiqueta de ruido
+ */
+function updateNoiseDisplay(val) {
+    const label = val === "0" ? "Sin Ruido" : `Ruido: ${val}0%`;
+    document.getElementById("noise-display").textContent = label;
 }
 
 /**
  * Cambiar el nivel de ruido fisiológico inyectado
  */
 async function updateNoise(val) {
-    const label = val === "0" ? "Sin Ruido" : `Ruido: ${val}0%`;
-    document.getElementById("noise-display").textContent = label;
+    updateNoiseDisplay(val);
     await sendControlRequest(`noise=${val}`);
 }
 
@@ -377,6 +428,12 @@ async function fetchVitalsData() {
             currentVals[code] = obs.valueQuantity.value;
         });
 
+        // Enviar frecuencia cardíaca al Web Worker para mantener pitidos en segundo plano
+        const hr = currentVals["8867-4"];
+        if (hr !== undefined && pollingWorker) {
+            pollingWorker.postMessage({ action: 'set_hr', hr: hr });
+        }
+
         activeLoincs.forEach(code => {
             const val = currentVals[code];
             const disp = document.getElementById(`display-val-${code}`);
@@ -412,7 +469,13 @@ async function fetchVitalsData() {
 // BACKEND PYTHON WEBSOCKET
 window.pythonWS = null;
 window.lastEcgPayload = null;
+let wsReconnectTimer = null;
+
 function startPythonBackendWS() {
+    if (wsReconnectTimer) {
+        clearTimeout(wsReconnectTimer);
+        wsReconnectTimer = null;
+    }
     const ip = document.getElementById('server-ip-input').value || 'localhost';
     const wsUrl = `ws://${ip}:8081/ws/ecg`;
     window.pythonWS = new WebSocket(wsUrl);
@@ -425,7 +488,14 @@ function startPythonBackendWS() {
         }
     };
     window.pythonWS.onerror = (e) => { logMessage('Error WS. Comprueba que server.py está corriendo.', 'error'); };
-    window.pythonWS.onclose = () => { logMessage('Desconectado del servidor Python.', 'warning'); };
+    window.pythonWS.onclose = () => { 
+        logMessage('Desconectado del servidor Python.', 'warning'); 
+        // Intentar reconectar automáticamente tras 3 segundos
+        wsReconnectTimer = setTimeout(() => {
+            logMessage('Intentando reconectar con el servidor WebSocket...', 'info');
+            startPythonBackendWS();
+        }, 3000);
+    };
 }
 
 /**
@@ -449,6 +519,33 @@ async function runDesktopVisualizer() {
         }
     } catch (err) {
         logMessage(`Fallo al lanzar el Visualizador Clínico: ${err.message || 'servidor desconectado'}`, "error");
+        if (typeof audioEngine !== 'undefined') {
+            audioEngine.playHeartbeat(150);
+        }
+    }
+}
+
+/**
+ * Lanzar la suite completa ejecutando Lanzar_BiosenseLink.bat en la PC
+ */
+async function runLauncher() {
+    logMessage("Enviando orden de ejecución para Lanzar_BiosenseLink.bat...", "info");
+    try {
+        const response = await fetch("http://localhost:8081/api/run-launcher", {
+            method: "POST"
+        });
+        if (!response.ok) throw new Error();
+        const data = await response.json();
+        if (data.status === "ok") {
+            logMessage("¡Lanzador Lanzar_BiosenseLink.bat ejecutado con éxito!", "success");
+            if (typeof audioEngine !== 'undefined') {
+                audioEngine.playHeartbeat(880);
+            }
+        } else {
+            throw new Error(data.message);
+        }
+    } catch (err) {
+        logMessage(`Fallo al ejecutar el lanzador: ${err.message || 'servidor desconectado'}`, "error");
         if (typeof audioEngine !== 'undefined') {
             audioEngine.playHeartbeat(150);
         }

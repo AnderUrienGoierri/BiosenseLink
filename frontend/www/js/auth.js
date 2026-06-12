@@ -157,3 +157,71 @@ function logout() {
     document.getElementById("auth-portal").classList.remove("opacity-0", "pointer-events-none");
     document.getElementById("auth-error-msg").classList.add("hidden");
 }
+
+/**
+ * Mostrar / Ocultar el panel de control de base de datos en pantalla de Login
+ */
+function toggleDbPanel(e) {
+    if (e) e.stopPropagation();
+    const panel = document.getElementById("db-control-panel");
+    if (!panel) return;
+    if (panel.classList.contains("hidden")) {
+        panel.classList.remove("hidden");
+        verifyDbConnection();
+    } else {
+        panel.classList.add("hidden");
+    }
+}
+
+/**
+ * Verificar el estado de la conexión a la base de datos PostgreSQL desde la API
+ */
+async function verifyDbConnection() {
+    const statusText = document.getElementById("db-status-text");
+    const statusDot = document.getElementById("db-status-dot");
+    const detailsText = document.getElementById("db-details-text");
+    
+    if (!statusText || !statusDot || !detailsText) return;
+    
+    statusText.textContent = "Verificando...";
+    statusDot.className = "w-2.5 h-2.5 rounded-full bg-yellow-500 animate-pulse";
+    
+    try {
+        const response = await fetch('http://localhost:8081/api/db/status');
+        const data = await response.json();
+        
+        if (data.db_available && data.db_connection_allowed) {
+            statusText.textContent = "CONECTADO (ONLINE)";
+            statusText.className = "text-xs font-bold text-emerald-400";
+            statusDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400";
+        } else if (!data.db_connection_allowed) {
+            statusText.textContent = "DESCONECTADO (FORZADO)";
+            statusText.className = "text-xs font-bold text-red-400";
+            statusDot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
+        } else {
+            statusText.textContent = "ERROR DE CONEXIÓN";
+            statusText.className = "text-xs font-bold text-amber-500";
+            statusDot.className = "w-2.5 h-2.5 rounded-full bg-amber-500";
+        }
+        
+        detailsText.innerHTML = `Host: localhost:5432<br>DB: medical_platform<br>Allowed: ${data.db_connection_allowed}<br>Available: ${data.db_available}<br>Details: ${data.details || 'OK'}`;
+    } catch (err) {
+        statusText.textContent = "ERROR DE SERVIDOR API";
+        statusText.className = "text-xs font-bold text-red-500";
+        statusDot.className = "w-2.5 h-2.5 rounded-full bg-red-600";
+        detailsText.textContent = "No se pudo conectar con el servidor backend FastAPI en el puerto 8081. Asegúrese de que server.py esté iniciado.";
+    }
+}
+
+/**
+ * Conectar o desconectar la base de datos PostgreSQL mediante una petición a la API
+ */
+async function controlDbConnection(action) {
+    const endpoint = action === 'connect' ? 'connect' : 'disconnect';
+    try {
+        await fetch(`http://localhost:8081/api/db/${endpoint}`, { method: 'POST' });
+        verifyDbConnection();
+    } catch (err) {
+        console.error("Error al controlar conexión de base de datos:", err);
+    }
+}

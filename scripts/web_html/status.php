@@ -166,7 +166,7 @@ $services = [
                 'name'       => 'MySQL',
                 'host'       => 'mysql_db',
                 'port'       => 3306,
-                'url'        => 'http://localhost:8082',
+                'url'        => '#',
                 'tag'        => 'TCP :3306',
                 'container'  => 'mysql_db',
                 'hosted_on'  => $DOCKER_BADGE,
@@ -239,12 +239,30 @@ $services = [
             ],
             [
                 'name'       => 'SSH — Arch Linux VM',
-                'host'       => $GATEWAY,
-                'port'       => 22,
+                'host'       => 'host.docker.internal',
+                'port'       => 2222,
                 'url'        => '#',
                 'tag'        => 'SSH :2222',
-                'container'  => 'sshd (nativo)',
-                'hosted_on'  => "{$osIcon} {$hostOS['name']} (nativo)",
+                'container'  => 'Arch-Linux-Dev',
+                'hosted_on'  => $WINDOWS_BADGE,
+            ],
+            [
+                'name'       => 'SSH — Fedora VM',
+                'host'       => 'host.docker.internal',
+                'port'       => 2223,
+                'url'        => '#',
+                'tag'        => 'SSH :2223',
+                'container'  => 'Fedora-Workstation',
+                'hosted_on'  => $WINDOWS_BADGE,
+            ],
+            [
+                'name'       => 'SSH — Ubuntu VM',
+                'host'       => 'host.docker.internal',
+                'port'       => 2224,
+                'url'        => '#',
+                'tag'        => 'SSH :2224',
+                'container'  => 'Ubuntu_Ander',
+                'hosted_on'  => $WINDOWS_BADGE,
             ],
         ]
     ],
@@ -369,7 +387,7 @@ $checkedAt = date('H:i:s');
             text-decoration:none;color:inherit;
             transition:transform .18s,border-color .18s;
         }
-        .card:hover { transform:translateY(-2px);border-color:rgba(255,255,255,.12); }
+        a.card:hover { transform:translateY(-2px);border-color:rgba(255,255,255,.12); }
         .card::before { content:'';position:absolute;inset:0;border-radius:12px;pointer-events:none; }
         .card.online::before  { background:rgba(16,185,129,.08); }
         .card.offline::before { background:rgba(239,68,68,.08); }
@@ -516,7 +534,11 @@ $checkedAt = date('H:i:s');
                 $typeTag = 'native'; $typeLabel = 'Nativo';
             }
         ?>
-            <a class="card <?= $cls ?>" href="<?= htmlspecialchars($item['url']) ?>" target="_blank">
+            <?php if ($item['url'] && $item['url'] !== '#'): ?>
+                <a class="card <?= $cls ?>" href="<?= htmlspecialchars($item['url']) ?>" target="_blank">
+            <?php else: ?>
+                <div class="card <?= $cls ?>">
+            <?php endif; ?>
                 <!-- Top: dot + name + status -->
                 <div class="card-top">
                     <span class="dot <?= $cls ?>"></span>
@@ -546,7 +568,11 @@ $checkedAt = date('H:i:s');
                     </div>
                     <span class="host-type-tag <?= $typeTag ?>"><?= $typeLabel ?></span>
                 </div>
-            </a>
+            <?php if ($item['url'] && $item['url'] !== '#'): ?>
+                </a>
+            <?php else: ?>
+                </div>
+            <?php endif; ?>
         <?php endforeach; ?>
         </div>
     </section>

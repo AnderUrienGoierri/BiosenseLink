@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="assets/icons/favicon.ico" />
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" sizes="180x180">
+    <link rel="mask-icon" href="assets/icons/logo.svg">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+    <title>Homer</title>
+    <script type="module" crossorigin src="./resources/index-B7cw-cKB.js"></script>
+    <link rel="modulepreload" crossorigin href="./resources/_plugin-vue_export-helper-LledoY8b.js">
+    <link rel="modulepreload" crossorigin href="./resources/service-AWe6Zi3q.js">
+    <link rel="stylesheet" crossorigin href="./resources/index-yln0bw4y.css">
+  <link rel="manifest" href="./assets/manifest.json" crossorigin="use-credentials"><script id="vite-plugin-pwa:register-sw" src="./registerSW.js"></script></head>
+  <body>
+    <div id="app-mount"></div>
+
+    <!-- Custom Homer Info Modal -->
+    <div id="homer-info-modal" style="display: none; position: fixed; bottom: 20px; right: 20px; width: 330px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(0, 210, 196, 0.4); border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); color: #f1f5f9; font-family: system-ui, -apple-system, sans-serif; padding: 20px; z-index: 99999; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; transform: translateY(20px) scale(0.95); text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 10px; margin-bottom: 15px;">
+        <h3 style="margin: 0; font-size: 15px; color: #00d2c4; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+          <i class="fas fa-server"></i> Info del Servidor Homer
+        </h3>
+        <button id="homer-info-close" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 18px; line-height: 1; transition: color 0.2s;" onmouseover="this.style.color='#00d2c4'" onmouseout="this.style.color='#94a3b8'">&times;</button>
+      </div>
+      <div style="font-size: 12.5px; line-height: 1.6; display: flex; flex-direction: column; gap: 10px;">
+        <div>
+          <span style="color: #94a3b8; font-weight: 500; display: block; margin-bottom: 2px;">Aplicación:</span>
+          <span style="color: #f8fafc; font-weight: 600;">Homer Dashboard</span>
+        </div>
+        <div>
+          <span style="color: #94a3b8; font-weight: 500; display: block; margin-bottom: 2px;">Contenedor:</span>
+          <code style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05); color: #38bdf8; font-family: Consolas, monospace; font-size: 11px;">homer</code>
+        </div>
+        <div>
+          <span style="color: #94a3b8; font-weight: 500; display: block; margin-bottom: 2px;">Imagen:</span>
+          <code style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05); color: #e2e8f0; font-family: Consolas, monospace; font-size: 11px;">b4bz/homer:latest</code>
+        </div>
+        <div>
+          <span style="color: #94a3b8; font-weight: 500; display: block; margin-bottom: 2px;">Puerto local:</span>
+          <code style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05); color: #00d2c4; font-family: Consolas, monospace; font-size: 11px;">8085 &rarr; 8080 (Docker)</code>
+        </div>
+        <div>
+          <span style="color: #94a3b8; font-weight: 500; display: block; margin-bottom: 2px;">Ruta de Configuración (Host):</span>
+          <div style="background: rgba(0,0,0,0.4); padding: 8px; border-radius: 6px; font-family: Consolas, monospace; font-size: 10.5px; word-break: break-all; border: 1px solid rgba(255,255,255,0.05); color: #cbd5e1; line-height: 1.4;">
+            C:\Dev\05_Projects\Biomedical_IoMT\BiosenseLink\scripts\homer-dashboard-assets\config.yml
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Embedded Browser Drawer -->
+    <div id="homer-browser-drawer" style="position: fixed; top: 0; right: 0; width: 75%; height: 100%; background: #0c1220; border-left: 1px solid rgba(0, 210, 196, 0.3); box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5); z-index: 99998; transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); transform: translateX(100%); display: flex; flex-direction: column;">
+      <!-- Control Bar -->
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: #0f172a; border-bottom: 1px solid rgba(255, 255, 255, 0.08); gap: 15px; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button id="homer-browser-back" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #e2e8f0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(0, 210, 196, 0.1)'; this.style.borderColor='rgba(0, 210, 196, 0.4)';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='rgba(255,255,255,0.1)';">
+            <span style="font-size: 16px; font-weight: bold;">&larr;</span>
+          </button>
+          <span style="font-size: 14px; font-weight: 600; color: #00d2c4; white-space: nowrap;">Navegador Integrado</span>
+        </div>
+        
+        <!-- Address Bar -->
+        <div id="homer-browser-address" style="flex-grow: 1; display: flex; align-items: center; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 6px 12px; font-family: monospace; font-size: 12px; color: #94a3b8; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
+          https://pubmed.ncbi.nlm.nih.gov
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <a id="homer-browser-external" href="#" target="_blank" style="background: #00d2c4; border: none; border-radius: 6px; color: #070b13; padding: 6px 12px; font-size: 12px; font-weight: bold; text-decoration: none; display: flex; align-items: center; gap: 6px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#00b2a6'" onmouseout="this.style.background='#00d2c4'">
+            Abrir en pestaña nueva
+          </a>
+          <button id="homer-browser-close" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 24px; line-height: 1; transition: color 0.2s; padding: 0 5px;" onmouseover="this.style.color='#00d2c4'" onmouseout="this.style.color='#94a3b8'">&times;</button>
+        </div>
+      </div>
+
+      <!-- Warning Banner -->
+      <div id="homer-browser-warning" style="display: none; background: rgba(234, 179, 8, 0.1); border-bottom: 1px solid rgba(234, 179, 8, 0.2); padding: 8px 20px; font-size: 11.5px; color: #fef08a; font-family: system-ui, -apple-system, sans-serif; align-items: center; gap: 8px; line-height: 1.4;">
+        <span style="font-weight: bold;">⚠️ NOTA:</span> Si la página no carga, es porque el sitio web bloquea las vistas incrustadas por seguridad. Haz clic en "Abrir en pestaña nueva".
+      </div>
+
+      <!-- Iframe Container -->
+      <div style="flex-grow: 1; background: #ffffff; position: relative;">
+        <iframe id="homer-browser-iframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+      </div>
+    </div>
+
+    <!-- Script to connect modal, embedded browser, power control, and dynamic translation -->
+    <script>
+      (function() {
+        let isBrowserOpen = false;
+
+        // --- DICTIONARY FOR TRANSLATIONS ---
+        const translations = {
+          es: {
+            "Servicios Locales": "Servicios Locales",
+            "Servicios Remotos": "Servicios Remotos",
+            "Hub de APIs": "Hub de APIs",
+            "Bases de Datos Científicas": "Bases de Datos Científicas",
+            "Monitoreo en Tiempo Real": "Monitoreo en Tiempo Real"
+          },
+          eu: {
+            // Navigation
+            "Servicios Locales": "Tokiko Zerbitzuak",
+            "Servicios Remotos": "Urrutiko Zerbitzuak",
+            "Hub de APIs": "APIs Gunea",
+            "Bases de Datos Científicas": "Datu-base Zientifikoak",
+            "Monitoreo en Tiempo Real": "Moni. Denbora Errealean",
+            "Portal GOsasun": "GOsasun Ataria",
+            // Header titles
+            "Biomedical & IoMT Engineering Hub": "Ingeniaritza Biomedikoa eta IoMT Gunea",
+            // GOsasun Page
+            "Lanzadores y Base de Datos (Desktop & SQL)": "Abiarazleak eta Datu-basea (Mahaigaina eta SQL)",
+            "Portales de Gestión Web (PHP / Apache)": "Kudeaketa Web Atariak (PHP / Apache)",
+            "Lanzar GOsasun App (Desktop)": "GOsasun App abiarazi (Mahaigaina)",
+            "Ejecuta la aplicación de escritorio GOsasun (C#) en segundo plano": "GOsasun mahaigaineko aplikazioa (C#) atzeko planoan exekutatzen du",
+            "Lanzar MySQL Workbench": "MySQL Workbench abiarazi",
+            "Ejecuta MySQL Workbench local en segundo plano": "MySQL Workbench lokalki atzeko planoan exekutatzen du",
+            "phpMyAdmin (Base de datos GOsasun)": "phpMyAdmin (GOsasun datu-basea)",
+            "Gestión web de la base de datos gosasun_db (Puerto 8082)": "gosasun_db datu-basearen web kudeaketa (8082 Portua)",
+            "GOsasun Atari Nagusia": "GOsasun Atari Nagusia",
+            "Acceso general y login al portal de salud": "Osasun atarirako sarbide orokorra eta saio-hasiera",
+            "Atari Pazientea (Pacientes)": "Pazienteen Ataria",
+            "Portal web para que los pacientes ingresen medidas y consulten citas": "Pazienteek neurketak sartu eta hitzorduak kontsultatzeko web ataria",
+            "Atari Medikuak (Médicos)": "Medikuen Ataria",
+            "Portal web para el personal médico (recetas, seguimiento, etc.)": "Medikuentzako web ataria (errezetak, jarraipena, etab.)",
+            "Atari Harrera (Recepción)": "Harrerako Ataria",
+            "Portal web para el personal de recepción (gestión de citas y pacientes)": "Harrerako langileentzako web ataria (hitzordu eta pazienteen kudeaketa)",
+            "Centro de Control e Infraestructura de Simulación y Datos Clínicos": "Simulazio klinikorako eta datuetarako kontrol zentroa",
+            // Categories
+            "Desarrollo y Simulación Biomédica": "Garapen eta Simulazio Biomedikoa",
+            "Control y Proyectos": "Kontrola eta Proiektuak",
+            "Inteligencia Artificial y Automatización": "Adimen Artifiziala eta Automatizazioa",
+            "Agentes IA Locales": "Tokiko IA Agenteak",
+            "Gestión Documental y Reportes": "Dokumentu Kudeaketa eta Txostenak",
+            "Bases de Datos Relacionales": "Datu-base Erlazionalak",
+            "Infraestructura y Recursos": "Azpiegitura eta Baliabideak",
+            "Bibliografía y Bases de Datos Científicas (Buscadores Web)": "Datu-base Zientifikoak eta Bilatzaileak (Web)",
+            "01. Ingeniería de Software, Algoritmos y Clean Code": "01. Software Ingeniaritza, Algoritmoak eta Clean Code",
+            "02. Bioinformática, Python y Ciencia de Datos": "02. Bioinformatika, Python eta Datu Zientzia",
+            "03. Tecnología Médica, IoMT y Desarrollo Multiplataforma": "03. Teknologia Medikoa, IoMT eta Garapen Multiplataforma",
+            "04. Inteligencia Artificial y Deep Learning": "04. Adimen Artifiziala eta Deep Learning",
+            "05. Bases de Datos, Contenedores y ETL": "05. Datu-baseak, Edukiontziak eta ETL",
+            "06. Sistemas Operativos, Consola Unix y Git": "06. Sistema Eragileak, Unix Kontsola eta Git",
+            "Servicios en Máquinas Virtuales (VMs / Servidores)": "Makina Birtualetako Zerbitzuak (VMs / Zerbitzariak)",
+            "Entorno CachyOS (Partición de este Portátil)": "CachyOS Ingurunea (Ordenagailu honen Partizioa)",
+            "APIs de Desarrollo y Consolas de Control": "Garapen APIs eta Kontrol Kontsolak",
+            "Monitoreo de Infraestructura y Logs": "Azpiegituraren Monitorizazioa eta Log-ak",
+            // Card subtitles/descriptions (Common ones)
+            "Servidor de Telemetría Point-of-Care (FastAPI) (8081)": "Point-of-Care Telemetria Zerbitzaria (FastAPI) (8081)",
+            "Servidor de Interoperabilidad HL7 FHIR R4 (8080)": "HL7 FHIR R4 Elkaroperagarritasun Zerbitzaria (8080)",
+            "Visualizador de Telemetría y Pose IoMT (3030/ui)": "Telemetria eta IoMT Pose Ikuslea (3030/ui)",
+            "Endpoints Técnicos y Datos de Sensores (3030)": "Endpoint Teknikoak eta Sentsore Datuak (3030)",
+            "Monitor TCP en tiempo real de todos los servicios": "Zerbitzu guztien TCP monitorea denbora errealean",
+            "Acceso al Servidor Local (C:\\dev)": "Tokiko Zerbitzariarentzako Sarbidea (C:\\dev)",
+            "Modelos IA Locales (Phi-3, Meditron...) (11434)": "Tokiko IA Modeloak (Phi-3, Meditron...) (11434)",
+            "Orquestador de Workflows e Integración (5678)": "Lan-fluxuen Orquestatzailea eta Integrazioa (5678)",
+            "Agente de Voz y Texto — qwen2.5-coder:7b · GPU Arc · ES/EU/EN": "Ahots eta Testu Agentea — qwen2.5-coder:7b · Arc GPU · ES/EU/EN",
+            "Interfaz web para chatear con modelos Ollama locales (11434)": "Ollama tokiko modeloekin hitz egiteko web interfazea (11434)",
+            "Gestión Documental y OCR de Informes (8010)": "Dokumentu Kudeaketa eta Txostenen OCR (8010)",
+            "Conversor y Motor de PDF Clínicos (3000)": "PDF Klinikoen Bihurgailua eta Motorra (3000)",
+            "Servidor Web PHP para Portales de Pruebas (8000)": "PHP Web Zerbitzaria Proba Portaletarako (8000)",
+            "Consola de Administración PostgreSQL (5050)": "PostgreSQL Kudeaketa Kontsola (5050)",
+            "Consola de Administración MySQL (8082)": "MySQL Kudeaketa Kontsola (8082)",
+            "Base de Datos Clínica — Gestionar en pgAdmin (5050)": "Datu-base Klinikoa — Kudeatu pgAdmin bidez (5050)",
+            "Base de Datos General — Gestionar en phpMyAdmin (8082)": "Datu-base Orokorra — Kudeatu phpMyAdmin bidez (8082)",
+            "Panel de Control de Contenedores Docker (9000)": "Docker Edukiontzien Kontrol Panela (9000)",
+            "Consola Web del Sistema — Fedora Workstation (9090)": "Sistemaren Web Kontsola — Fedora Workstation (9090)",
+            "Acceso Remoto a Arch Linux (2222)": "Urruneko Sarbidea Arch Linux-era (2222)",
+            "Acceso Remoto a Fedora Workstation (2223)": "Urruneko Sarbidea Fedora Workstation-era (2223)",
+            "Acceso Remoto a Ubuntu (2224)": "Urruneko Sarbidea Ubuntu-ra (2224)",
+            "Administración web de VM Arch Linux (Puerto 9091 en Localhost)": "Arch Linux VM-ren Kudeaketa Web bidez (9091 Portua Localhost-en)",
+            "Administración web de VM Fedora (Puerto 9090 en Localhost)": "Fedora VM-ren Kudeaketa Web bidez (9090 Portua Localhost-en)",
+            "Servidor web Nginx en VM Ubuntu (Puerto 8083 en Localhost)": "Nginx Web Zerbitzaria Ubuntu VM-n (8083 Portua Localhost-en)",
+            "Acceso Web al panel Cockpit de CachyOS (cuando esté activo)": "CachyOS Cockpit panelera sarbidea (aktibo dagoenean)",
+            "Servidor Web local de pruebas en CachyOS (Puerto 8000)": "Tokiko proba web zerbitzaria CachyOS-en (8000 Portua)",
+            "Acceso terminal SSH a la partición CachyOS (puerto 22)": "SSH terminal sarbidea CachyOS partiziora (22 Portua)",
+            "Visor de logs en tiempo real para todos los contenedores Docker": "Log-ikuslea denbora errealean Docker edukiontzi guztientzat",
+            "Panel en tiempo real de consumo de hardware, CPU, RAM y red": "Hardware, CPU, RAM eta sare kontsumoaren panela denbora errealean",
+            "Documentación interactiva de la API de control clínico (Swagger)": "Swagger API dokumentazio interaktiboa kontrol klinikorako",
+            "Documentación estructurada de referencia de la API (ReDoc)": "ReDoc API erreferentziazko dokumentazio egituratua",
+            "Navegador y explorador de recursos FHIR clínicos": "FHIR baliabide klinikoen bilatzailea eta esploratzailea",
+            "Comprobación de estado y catálogo de modelos LLM activos": "Egoera egiaztatzea eta LLM modelo aktiboen katalogoa",
+            "Endpoints de Webhooks para automatizaciones y flujos": "Webhook-ak automatizazio eta fluxuetarako",
+            "Biomedical Hub © 2026 | Entorno de Desarrollo y Simulación Clínico | Windows Host": "Biomedical Hub © 2026 | Garapen eta Simulazio Klinikoen Ingurunea | Windows Host",
+            "Guía Scrum": "Scrum Gida"
+          },
+          en: {
+            // Navigation
+            "Servicios Locales": "Local Services",
+            "Servicios Remotos": "Remote Services",
+            "Hub de APIs": "API Hub",
+            "Bases de Datos Científicas": "Scientific Databases",
+            "Monitoreo en Tiempo Real": "Real-time Monitoring",
+            "Portal GOsasun": "GOsasun Portal",
+            // Header titles
+            "Biomedical & IoMT Engineering Hub": "Biomedical & IoMT Engineering Hub",
+            // GOsasun Page
+            "Lanzadores y Base de Datos (Desktop & SQL)": "Launchers & Database (Desktop & SQL)",
+            "Portales de Gestión Web (PHP / Apache)": "Web Management Portals (PHP / Apache)",
+            "Lanzar GOsasun App (Desktop)": "Launch GOsasun App (Desktop)",
+            "Ejecuta la aplicación de escritorio GOsasun (C#) en segundo plano": "Runs the GOsasun desktop application (C#) in the background",
+            "Lanzar MySQL Workbench": "Launch MySQL Workbench",
+            "Ejecuta MySQL Workbench local en segundo plano": "Runs local MySQL Workbench in the background",
+            "phpMyAdmin (Base de datos GOsasun)": "phpMyAdmin (GOsasun Database)",
+            "Gestión web de la base de datos gosasun_db (Puerto 8082)": "Web management for gosasun_db database (Port 8082)",
+            "GOsasun Atari Nagusia": "GOsasun Main Portal",
+            "Acceso general y login al portal de salud": "General access and login to the health portal",
+            "Atari Pazientea (Pacientes)": "Patient Portal",
+            "Portal web para que los pacientes ingresen medidas y consulten citas": "Web portal for patients to enter measurements and check appointments",
+            "Atari Medikuak (Médicos)": "Doctor Portal",
+            "Portal web para el personal médico (recetas, seguimiento, etc.)": "Web portal for medical staff (prescriptions, follow-up, etc.)",
+            "Atari Harrera (Recepción)": "Receptionist Portal",
+            "Portal web para el personal de recepción (gestión de citas y pacientes)": "Web portal for reception staff (appointment and patient management)",
+            "Centro de Control e Infraestructura de Simulación y Datos Clínicos": "Control Center and Clinical Simulation & Data Infrastructure",
+            // Categories
+            "Desarrollo y Simulación Biomédica": "Biomedical Development & Simulation",
+            "Control y Proyectos": "Control & Projects",
+            "Inteligencia Artificial y Automatización": "AI & Automation",
+            "Agentes IA Locales": "Local AI Agents",
+            "Gestión Documental y Reportes": "Document Management & Reports",
+            "Bases de Datos Relacionales": "Relational Databases",
+            "Infraestructura y Recursos": "Infrastructure & Resources",
+            "Bibliografía y Bases de Datos Científicas (Buscadores Web)": "Scientific Databases & Search (Web)",
+            "01. Ingeniería de Software, Algoritmos y Clean Code": "01. Software Engineering, Algorithms & Clean Code",
+            "02. Bioinformática, Python y Ciencia de Datos": "02. Bioinformatics, Python & Data Science",
+            "03. Tecnología Médica, IoMT y Desarrollo Multiplataforma": "03. Medical Technology, IoMT & Multiplatform Dev",
+            "04. Inteligencia Artificial y Deep Learning": "04. Artificial Intelligence & Deep Learning",
+            "05. Bases de Datos, Contenedores y ETL": "05. Databases, Containers & ETL",
+            "06. Sistemas Operativos, Consola Unix y Git": "06. Operating Systems, Unix Console & Git",
+            "Servicios en Máquinas Virtuales (VMs / Servidores)": "Services in Virtual Machines (VMs / Servers)",
+            "Entorno CachyOS (Partición de este Portátil)": "CachyOS Environment (Local Partition)",
+            "APIs de Desarrollo y Consolas de Control": "Development APIs & Control Consoles",
+            "Monitoreo de Infraestructura y Logs": "Infrastructure Monitoring & Logs",
+            // Card subtitles/descriptions (Common ones)
+            "Servidor de Telemetría Point-of-Care (FastAPI) (8081)": "Point-of-Care Telemetry Server (FastAPI) (8081)",
+            "Servidor de Interoperabilidad HL7 FHIR R4 (8080)": "HL7 FHIR R4 Interoperability Server (8080)",
+            "Visualizador de Telemetría y Pose IoMT (3030/ui)": "Telemetry & IoMT Pose Visualizer (3030/ui)",
+            "Endpoints Técnicos y Datos de Sensores (3030)": "Technical Endpoints & Sensor Data (3030)",
+            "Monitor TCP en tiempo real de todos los servicios": "Real-time TCP service monitor for all apps",
+            "Acceso al Servidor Local (C:\\dev)": "Access to Local Server (C:\\dev)",
+            "Modelos IA Locales (Phi-3, Meditron...) (11434)": "Local AI Models (Phi-3, Meditron...) (11434)",
+            "Orquestador de Workflows e Integración (5678)": "Workflow Orchestrator & Integration (5678)",
+            "Agente de Voz y Texto — qwen2.5-coder:7b · GPU Arc · ES/EU/EN": "Voice & Text Agent — qwen2.5-coder:7b · Arc GPU · ES/EU/EN",
+            "Interfaz web para chatear con modelos Ollama locales (11434)": "Web UI to chat with local Ollama models (11434)",
+            "Gestión Documental y OCR de Informes (8010)": "Document Management & Report OCR (8010)",
+            "Conversor y Motor de PDF Clínicos (3000)": "Clinical PDF Engine & Converter (3000)",
+            "Servidor Web PHP para Portales de Pruebas (8000)": "PHP Web Server for Testing Portals (8000)",
+            "Consola de Administración PostgreSQL (5050)": "PostgreSQL Admin Console (5050)",
+            "Consola de Administración MySQL (8082)": "MySQL Admin Console (8082)",
+            "Base de Datos Clínica — Gestionar en pgAdmin (5050)": "Clinical Database — Manage in pgAdmin (5050)",
+            "Base de Datos General — Gestionar en phpMyAdmin (8082)": "General Database — Manage in phpMyAdmin (8082)",
+            "Panel de Control de Contenedores Docker (9000)": "Docker Container Control Panel (9000)",
+            "Consola Web del Sistema — Fedora Workstation (9090)": "System Web Console — Fedora Workstation (9090)",
+            "Acceso Remoto a Arch Linux (2222)": "Arch Linux Remote SSH Access (2222)",
+            "Acceso Remoto a Fedora Workstation (2223)": "Fedora Workstation Remote SSH Access (2223)",
+            "Acceso Remoto a Ubuntu (2224)": "Ubuntu Remote SSH Access (2224)",
+            "Administración web de VM Arch Linux (Puerto 9091 en Localhost)": "Arch Linux VM Web Admin (Port 9091 on Localhost)",
+            "Administración web de VM Fedora (Puerto 9090 en Localhost)": "Fedora VM Web Admin (Port 9090 on Localhost)",
+            "Servidor web Nginx en VM Ubuntu (Puerto 8083 en Localhost)": "Nginx Web Server on Ubuntu VM (Port 8083 on Localhost)",
+            "Acceso Web al panel Cockpit de CachyOS (cuando esté activo)": "Web access to CachyOS Cockpit panel (when active)",
+            "Servidor Web local de pruebas en CachyOS (Puerto 8000)": "Local web dev server on CachyOS (Port 8000)",
+            "Acceso terminal SSH a la partición CachyOS (puerto 22)": "SSH terminal access to CachyOS partition (Port 22)",
+            "Visor de logs en tiempo real para todos los contenedores Docker": "Real-time log viewer for all Docker containers",
+            "Panel en tiempo real de consumo de hardware, CPU, RAM y red": "Real-time hardware, CPU, RAM, and network usage dashboard",
+            "Documentación interactiva de la API de control clínico (Swagger)": "Interactive Swagger API documentation for clinical control",
+            "Documentación estructurada de referencia de la API (ReDoc)": "Structured reference ReDoc API documentation",
+            "Navegador y explorador de recursos FHIR clínicos": "FHIR clinical resources browser and explorer",
+            "Comprobación de estado y catálogo de modelos LLM activos": "Status check and active LLM models catalog",
+            "Endpoints de Webhooks para automatizaciones y flujos": "Webhook endpoints for automations and flows",
+            "Biomedical Hub © 2026 | Entorno de Desarrollo y Simulación Clínico | Windows Host": "Biomedical Hub © 2026 | Clinical Simulation & Dev Environment | Windows Host"
+          }
+        };
+
+        let currentLang = localStorage.getItem('homer-lang') || 'es';
+
+        // --- TRANSLATION CORE LOGIC ---
+        function translateText(text) {
+          if (currentLang === 'es') return text;
+          const dict = translations[currentLang];
+          if (!dict) return text;
+          
+          const trimmed = text.trim();
+          if (dict[trimmed]) {
+            return text.replace(trimmed, dict[trimmed]);
+          }
+          return text;
+        }
+
+        function translateNode(node) {
+          if (node.nodeType === Node.TEXT_NODE) {
+            const translated = translateText(node.nodeValue);
+            if (translated !== node.nodeValue) {
+              node.nodeValue = translated;
+            }
+          } else {
+            if (node.tagName === 'SCRIPT' || node.tagName === 'STYLE' || node.tagName === 'IFRAME') return;
+            if (node.tagName === 'INPUT' && node.placeholder) {
+              node.placeholder = translateText(node.placeholder);
+            }
+            for (let child of node.childNodes) {
+              translateNode(child);
+            }
+          }
+        }
+
+        function translatePage() {
+          observer.disconnect();
+          translateNode(document.body);
+          startObserving();
+        }
+
+        // MutationObserver to automatically translate dynamic content rendered by Vue
+        const observer = new MutationObserver((mutations) => {
+          observer.disconnect();
+          for (let mutation of mutations) {
+            if (mutation.type === 'childList') {
+              for (let node of mutation.addedNodes) {
+                translateNode(node);
+              }
+            } else if (mutation.type === 'characterData') {
+              translateNode(mutation.target);
+            }
+          }
+          startObserving();
+        });
+
+        function startObserving() {
+          observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            characterData: true
+          });
+        }
+
+        function initHomerCustomizations() {
+          // 1. Server Info Modal Setup
+          const logoEl = document.querySelector('.logo img') || document.querySelector('.logo a') || document.querySelector('.logo');
+          if (!logoEl) {
+            setTimeout(initHomerCustomizations, 100);
+            return;
+          }
+
+          const infoModal = document.getElementById('homer-info-modal');
+          const infoCloseBtn = document.getElementById('homer-info-close');
+
+          function showInfoModal(e) {
+            if (e) e.preventDefault();
+            if (infoModal.style.display === 'none') {
+              infoModal.style.display = 'block';
+              infoModal.offsetHeight; // force reflow
+              infoModal.style.opacity = '1';
+              infoModal.style.transform = 'translateY(0) scale(1)';
+            } else {
+              hideInfoModal();
+            }
+          }
+
+          function hideInfoModal() {
+            infoModal.style.opacity = '0';
+            infoModal.style.transform = 'translateY(20px) scale(0.95)';
+            setTimeout(() => {
+              if (infoModal.style.opacity === '0') {
+                infoModal.style.display = 'none';
+              }
+            }, 300);
+          }
+
+          logoEl.style.cursor = 'pointer';
+          logoEl.addEventListener('click', showInfoModal);
+          infoCloseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            hideInfoModal();
+          });
+
+          // 2. Embedded Browser Setup
+          const browserDrawer = document.getElementById('homer-browser-drawer');
+          const browserIframe = document.getElementById('homer-browser-iframe');
+          const browserAddress = document.getElementById('homer-browser-address');
+          const browserExternal = document.getElementById('homer-browser-external');
+          const browserCloseBtn = document.getElementById('homer-browser-close');
+          const browserBackBtn = document.getElementById('homer-browser-back');
+          const browserWarning = document.getElementById('homer-browser-warning');
+
+          let browserLoadTimeout = null;
+
+          function openBrowser(url) {
+            // Ocultar la nota inicialmente
+            if (browserWarning) {
+              browserWarning.style.display = 'none';
+            }
+
+            // Configurar temporizador: si en 3 segundos no recibimos confirmación, mostrar la nota
+            if (browserLoadTimeout) {
+              clearTimeout(browserLoadTimeout);
+            }
+            browserLoadTimeout = setTimeout(() => {
+              if (browserWarning) {
+                browserWarning.style.display = 'flex';
+              }
+            }, 3000);
+
+            // Cargar a través de nuestro proxy que elimina las cabeceras restrictivas
+            const proxiedUrl = `http://localhost:8081/api/proxy?url=${encodeURIComponent(url)}`;
+            browserIframe.src = proxiedUrl;
+            
+            browserAddress.textContent = url;
+            browserExternal.href = url; // El botón externo abre el enlace limpio original directamente
+            browserDrawer.style.transform = 'translateX(0%)';
+            isBrowserOpen = true;
+          }
+
+          function closeBrowser() {
+            if (browserLoadTimeout) {
+              clearTimeout(browserLoadTimeout);
+              browserLoadTimeout = null;
+            }
+            browserDrawer.style.transform = 'translateX(100%)';
+            isBrowserOpen = false;
+            setTimeout(() => {
+              if (!isBrowserOpen) browserIframe.src = '';
+            }, 400);
+          }
+
+          browserCloseBtn.addEventListener('click', closeBrowser);
+          browserBackBtn.addEventListener('click', closeBrowser);
+
+          // Escuchar el mensaje postMessage enviado por el script inyectado en el proxy
+          window.addEventListener('message', (e) => {
+            if (e.data && e.data.type === 'iframe_load_status' && e.data.status === 'success') {
+              if (browserLoadTimeout) {
+                clearTimeout(browserLoadTimeout);
+                browserLoadTimeout = null;
+              }
+              // Ocultar la nota de advertencia al confirmar carga exitosa
+              if (browserWarning) {
+                browserWarning.style.display = 'none';
+              }
+            }
+          });
+
+          // Intercept click on any HTTP links (service cards and dev tools) in capture phase
+          document.body.addEventListener('click', (e) => {
+            const anchor = e.target.closest('a');
+            if (!anchor) return;
+
+            const url = anchor.getAttribute('href');
+            if (!url) return;
+
+            // If the anchor is the "Abrir en pestaña nueva" button or inside the drawer, don't intercept!
+            if (anchor.id === 'homer-browser-external' || anchor.closest('#homer-browser-drawer')) {
+              return;
+            }
+
+            // Intercept all HTTP/HTTPS links except the Homer dashboard itself (localhost:8085) and hash routes
+            const isExternal = url.startsWith('http') && 
+                               !url.includes('localhost:8085') && 
+                               !url.startsWith('#');
+
+            if (isExternal) {
+              e.preventDefault();
+              e.stopPropagation(); // Prevent Vue from handling or stopping bubble propagation
+              
+              // Intercept API launch URLs and execute them in the background
+              if (url.includes('/api/') && (url.includes('/launch') || url.includes('/run-'))) {
+                fetch(url, { method: 'POST' })
+                  .then(response => response.json())
+                  .then(data => {
+                    if (data.status === 'ok') {
+                      const msg = currentLang === 'eu' ? 'Aplikazioa ongi hasi da!' : currentLang === 'en' ? 'Application launched successfully!' : '¡Aplicación iniciada con éxito!';
+                      alert(msg);
+                    } else {
+                      alert('Error: ' + data.message);
+                    }
+                  })
+                  .catch(err => alert('Error: ' + err));
+              } else {
+                openBrowser(url);
+              }
+            }
+          }, true); // Use capture phase to intercept before Vue handlers
+
+          // Close modal or drawer on clicking outside
+          document.addEventListener('click', (e) => {
+            // Close info modal if clicked outside
+            if (infoModal.style.display === 'block' && !infoModal.contains(e.target) && !logoEl.contains(e.target)) {
+              hideInfoModal();
+            }
+            // Close browser drawer if clicked outside (e.g. left side of screen)
+            if (isBrowserOpen && !browserDrawer.contains(e.target) && !e.target.closest('.card') && !e.target.closest('a')) {
+              closeBrowser();
+            }
+          });
+
+          // 3. Header Customizations Setup (Power Button & Language Selector)
+          function ensureHeaderCustomizations() {
+            const logoContainer = document.querySelector('.logo');
+            if (!logoContainer) return;
+
+            // Render Language Selector first
+            if (!document.getElementById('homer-lang-select')) {
+              const langSelect = document.createElement('select');
+              langSelect.id = 'homer-lang-select';
+              langSelect.style.cssText = 'background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #e2e8f0; padding: 4px 6px; font-size: 11px; cursor: pointer; outline: none; margin-left: 12px; font-family: system-ui, -apple-system, sans-serif; vertical-align: middle; position: relative; top: -2px; font-weight: 500; transition: border-color 0.2s;';
+              langSelect.innerHTML = `
+                <option value="es" style="background:#0f172a; color:#f1f5f9;">Castellano</option>
+                <option value="eu" style="background:#0f172a; color:#f1f5f9;">Euskara</option>
+                <option value="en" style="background:#0f172a; color:#f1f5f9;">English</option>
+              `;
+              langSelect.value = currentLang;
+
+              langSelect.onchange = (e) => {
+                currentLang = e.target.value;
+                localStorage.setItem('homer-lang', currentLang);
+                location.reload();
+              };
+
+              // Hover styling
+              langSelect.onmouseover = () => { langSelect.style.borderColor = 'rgba(0, 210, 196, 0.4)'; };
+              langSelect.onmouseout = () => { langSelect.style.borderColor = 'rgba(255,255,255,0.15)'; };
+
+              logoContainer.appendChild(langSelect);
+            }
+
+            // Render Power Button next
+            if (!document.getElementById('homer-power-btn')) {
+              const powerBtn = document.createElement('span');
+              powerBtn.id = 'homer-power-btn';
+              powerBtn.title = 'Apagar Servidor Homer (localhost:8085)';
+              powerBtn.style.cssText = 'cursor: pointer; margin-left: 10px; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #ef4444; transition: all 0.2s ease; vertical-align: middle; position: relative; top: -2px;';
+              powerBtn.innerHTML = '<i class="fas fa-power-off" style="font-size: 12px;"></i>';
+
+              powerBtn.onmouseover = () => {
+                powerBtn.style.background = 'rgba(239, 68, 68, 0.3)';
+                powerBtn.style.transform = 'scale(1.1)';
+              };
+              powerBtn.onmouseout = () => {
+                powerBtn.style.background = 'rgba(239, 68, 68, 0.15)';
+                powerBtn.style.transform = 'scale(1)';
+              };
+
+              powerBtn.onclick = async (e) => {
+                e.stopPropagation();
+                const confirmMsg = currentLang === 'eu' 
+                  ? '⚠️ Ziur zaude Homer zerbitzaria itzali nahi duzula?\n\nHonek Docker "homer" edukiontzia geldituko du. "localhost:8085" webguneak funtzionatzeari utziko dio berehala.'
+                  : currentLang === 'en'
+                  ? '⚠️ Are you sure you want to shut down the Homer server?\n\nThis will stop the Docker container "homer". The website "localhost:8085" will stop working immediately.'
+                  : '⚠️ ¿Estás seguro de que quieres apagar el servidor Homer?\n\nEsto detendrá el contenedor Docker "homer". La página web "localhost:8085" dejará de funcionar inmediatamente y no podrás volver a encenderlo desde aquí.';
+
+                const confirmStop = confirm(confirmMsg);
+                if (!confirmStop) return;
+
+                powerBtn.style.color = '#94a3b8';
+                powerBtn.style.borderColor = '#475569';
+                powerBtn.style.background = 'rgba(148, 163, 184, 0.1)';
+                powerBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size: 12px;"></i>';
+
+                try {
+                  const response = await fetch('http://localhost:8081/api/homer/stop', { method: 'POST' });
+                  const data = await response.json();
+                  if (data.status === 'ok') {
+                    const shutdownTitle = currentLang === 'eu' ? 'Homer Zerbitzaria Itzali Da' : currentLang === 'en' ? 'Homer Server Shut Down' : 'Servidor Homer Apagado';
+                    const shutdownDesc = currentLang === 'eu' 
+                      ? 'Docker "homer" edukiontzia ongi gelditu da. Fitxa honek ez du gehiago funtzionatuko. Berriz pizteko, exekutatu <code style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-family: monospace; color: #00d2c4;">docker start homer</code> komandoa terminalean.'
+                      : currentLang === 'en'
+                      ? 'The Docker container "homer" has been stopped successfully. This tab is no longer active. To start it again, run <code style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-family: monospace; color: #00d2c4;">docker start homer</code> in your terminal.'
+                      : 'El contenedor Docker "homer" ha sido detenido con éxito. Esta pestaña ya no funcionará. Para volver a encenderlo, ejecuta el comando <code style="background: rgba(255,255,255,0.08); padding: 3px 6px; border-radius: 4px; font-family: monospace; color: #00d2c4;">docker start homer</code> o utiliza Docker Desktop.';
+                    
+                    document.body.innerHTML = `
+                      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #070b13; color: #f1f5f9; font-family: system-ui, sans-serif; text-align: center; padding: 20px;">
+                        <div style="font-size: 64px; color: #ef4444; margin-bottom: 20px;">⚡</div>
+                        <h1 style="font-size: 24px; font-weight: 600; color: #f8fafc; margin-bottom: 10px;">${shutdownTitle}</h1>
+                        <p style="color: #94a3b8; font-size: 14px; max-width: 400px; line-height: 1.6;">${shutdownDesc}</p>
+                      </div>
+                    `;
+                  } else {
+                    alert('Error: ' + data.message);
+                    resetPowerBtn();
+                  }
+                } catch (err) {
+                  alert(currentLang === 'eu' 
+                    ? 'Ezin izan da konektatu 8081 portuko kontrol zerbitzariarekin.' 
+                    : currentLang === 'en'
+                    ? 'Could not connect to the control server on port 8081.' 
+                    : 'No se pudo conectar con el servidor de control en el puerto 8081.');
+                  resetPowerBtn();
+                }
+              };
+
+              function resetPowerBtn() {
+                powerBtn.style.color = '#ef4444';
+                powerBtn.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+                powerBtn.style.background = 'rgba(239, 68, 68, 0.15)';
+                powerBtn.innerHTML = '<i class="fas fa-power-off" style="font-size: 12px;"></i>';
+              }
+
+              logoContainer.appendChild(powerBtn);
+            }
+          }
+
+          // Ensure customizations exist, checking periodically against Vue DOM updates
+          ensureHeaderCustomizations();
+          setInterval(ensureHeaderCustomizations, 1000);
+
+          // Trigger initial translation
+          translatePage();
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initHomerCustomizations);
+        } else {
+          initHomerCustomizations();
+        }
+      })();
+    </script>
+  </body>
+</html>

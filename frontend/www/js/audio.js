@@ -10,6 +10,11 @@ class ClinicalAudioEngine {
         this.flatlineOsc = null;
         this.flatlineGain = null;
         this.criticalInterval = null;
+        
+        // Volúmenes independientes predeterminados
+        this.heartbeatVol = 0.08;
+        this.flatlineVol = 0.06;
+        this.alarmVol = 0.08;
     }
 
     init() {
@@ -23,6 +28,21 @@ class ClinicalAudioEngine {
         if (state) {
             this.stopFlatline();
             this.stopCritical();
+        }
+    }
+
+    setVolume(soundType, value) {
+        if (soundType === 'heartbeat') {
+            this.heartbeatVol = value;
+        } else if (soundType === 'flatline') {
+            this.flatlineVol = value;
+            if (this.flatlineGain && this.ctx) {
+                try {
+                    this.flatlineGain.gain.setValueAtTime(value, this.ctx.currentTime);
+                } catch (e) {}
+            }
+        } else if (soundType === 'alarm') {
+            this.alarmVol = value;
         }
     }
 
@@ -40,7 +60,7 @@ class ClinicalAudioEngine {
             osc.frequency.setValueAtTime(frequency, this.ctx.currentTime);
             
             // Envolvente de volumen tipo pulso clínico
-            gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+            gain.gain.setValueAtTime(this.heartbeatVol, this.ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.08);
             
             osc.start();
@@ -61,7 +81,7 @@ class ClinicalAudioEngine {
             this.flatlineGain.connect(this.ctx.destination);
             
             this.flatlineOsc.frequency.setValueAtTime(1000, this.ctx.currentTime);
-            this.flatlineGain.gain.setValueAtTime(0.06, this.ctx.currentTime);
+            this.flatlineGain.gain.setValueAtTime(this.flatlineVol, this.ctx.currentTime);
             
             this.flatlineOsc.start();
         } catch (e) {}
@@ -98,7 +118,7 @@ class ClinicalAudioEngine {
                         osc.connect(gain);
                         gain.connect(this.ctx.destination);
                         osc.frequency.setValueAtTime(980, this.ctx.currentTime);
-                        gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                        gain.gain.setValueAtTime(this.alarmVol, this.ctx.currentTime);
                         gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.1);
                         osc.start();
                         osc.stop(this.ctx.currentTime + 0.12);

@@ -24,25 +24,111 @@ const audioEngine = new ClinicalAudioEngine();
 // Perfil activo por defecto de ciberseguridad
 let activeProfile = "admin"; // admin | nurse
 
+// Web Worker para evitar la suspensión al minimizar la ventana
+let pollingWorker = null;
+
+function initPollingWorker() {
+    if (typeof Worker !== 'undefined') {
+        const workerCode = `
+            let timer = null;
+            let heartbeatTimer = null;
+            let hr = 72;
+            let isPaused = false;
+            
+            self.onmessage = function(e) {
+                if (e.data.action === 'start') {
+                    isPaused = false;
+                    if (timer) clearInterval(timer);
+                    timer = setInterval(() => {
+                        self.postMessage('tick');
+                    }, e.data.intervalMs);
+                    
+                    startHeartbeat();
+                } else if (e.data.action === 'stop') {
+                    isPaused = true;
+                    if (timer) clearInterval(timer);
+                    timer = null;
+                    if (heartbeatTimer) clearInterval(heartbeatTimer);
+                    heartbeatTimer = null;
+                } else if (e.data.action === 'set_hr') {
+                    hr = e.data.hr;
+                    if (!isPaused) {
+                        startHeartbeat();
+                    }
+                }
+            };
+            
+            function startHeartbeat() {
+                if (heartbeatTimer) clearInterval(heartbeatTimer);
+                if (hr < 5.0 || isPaused) return;
+                
+                const intervalMs = 60000.0 / hr;
+                heartbeatTimer = setInterval(() => {
+                    self.postMessage('heartbeat_tick');
+                }, intervalMs);
+            }
+        `;
+        const blob = new Blob([workerCode], {type: 'application/javascript'});
+        pollingWorker = new Worker(URL.createObjectURL(blob));
+        pollingWorker.onmessage = function(e) {
+            if (e.data === 'tick') {
+                fetchPatientData();
+                fetchVitalsData();
+            } else if (e.data === 'heartbeat_tick') {
+                // Solo reproducir el pitido acústico de fondo si la pestaña está minimizada/oculta
+                // (Si está visible, el propio bucle animateECG ya reproduce el sonido sincronizado con el pico visual)
+                if (document.hidden) {
+                    const hrDisp = document.getElementById("display-val-8867-4");
+                    let currentHr = 72;
+                    if (hrDisp && hrDisp.textContent !== "--") currentHr = parseFloat(hrDisp.textContent);
+                    if (typeof audioEngine !== 'undefined') {
+                        audioEngine.playHeartbeat(currentHr > 120 ? 620 : 550);
+                    }
+                }
+            }
+        };
+    }
+}
+
 /**
  * Iniciar o reiniciar el bucle de refresco fisiológico (polling adaptativo)
  */
 function restartPolling() {
-    if (pollTimer) clearInterval(pollTimer);
-    
     fetchPatientData();
     fetchVitalsData();
     
-    pollTimer = setInterval(() => {
-        fetchPatientData();
-        fetchVitalsData();
-    }, pollingIntervalSec * 1000);
+    if (pollingWorker) {
+        pollingWorker.postMessage({
+            action: 'start',
+            intervalMs: pollingIntervalSec * 1000
+        });
+    } else {
+        if (pollTimer) clearInterval(pollTimer);
+        pollTimer = setInterval(() => {
+            fetchPatientData();
+            fetchVitalsData();
+        }, pollingIntervalSec * 1000);
+    }
+}
+
+/**
+ * Detener el bucle de polling
+ */
+function stopPolling() {
+    if (pollingWorker) {
+        pollingWorker.postMessage({ action: 'stop' });
+    }
+    if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+    }
 }
 
 /**
  * Inicializador automático de la Suite SCADA (Bootstrap)
  */
 window.addEventListener('DOMContentLoaded', () => {
+    initPollingWorker();
     if (typeof applyUILanguage === 'function') applyUILanguage();
     renderTelemetryCards();
     recreateCharts();

@@ -23,7 +23,33 @@ services:
       - "8085:8080"
     volumes:
       - ./homer-dashboard-assets:/www/assets
+      - ./homer-dashboard-assets/index.html:/www/index.html
       - /etc/os-release:/www/assets/host-os-release:ro
+      - "D:/BibliographyCode:/www/assets/bibliography:ro"
+    networks:
+      - biomed-net
+
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    restart: always
+    ports:
+      - "8888:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - biomed-net
+
+  glances:
+    image: nicolargo/glances:latest-full
+    container_name: glances
+    restart: always
+    environment:
+      - GLANCES_OPT=-w
+    ports:
+      - "61208:61208"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - biomed-net
 

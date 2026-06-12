@@ -1,0 +1,19 @@
+¿Qué hace Lanzar_BiosenseLink.bat? 
+
+Es el punto de entrada y orquestador. Al hacer doble clic sobre él, inicia el script de PowerShell Lanzar_BiosenseLink.ps1 que realiza tres acciones en orden:
+
+Inicia la infraestructura Docker: Verifica y arranca tres contenedores indispensables:
+clinical-postgres-db (Puerto 5432): La base de datos relacional de la plataforma.
+hapi-fhir-server (Puerto 8080): Servidor estándar HL7 FHIR para interoperabilidad médica.
+ollama (Puerto 11434): Motor de inteligencia artificial local.
+Sincroniza la base de datos: Ejecuta db_setup.py para asegurar que las tablas de usuarios y roles estén inicializadas.
+Arranca el Servidor de Telemetría: Ejecuta python scripts/server.py que inicia un servidor web FastAPI en el puerto 8081 y abre el navegador por defecto apuntando a http://localhost:8081/.
+
+¿De dónde provienen las gráficas y la información?
+
+Simulador de Biosensores (Backend): Dentro del servidor en el puerto 8081 se ejecuta una tarea asíncrona permanente en segundo plano (continuous_vitals_simulator). Este motor simula los biosensores en base a presets clínicos y envía peticiones POST al servidor FHIR en el puerto 8080 cada interval segundos.
+
+Gráficas y Datos (Frontend): El dashboard web (abierto en el puerto 8081) realiza periódicamente peticiones GET a http://localhost:8080/fhir/Observation (servidor FHIR) para obtener las últimas observaciones del paciente activo y pintarlas en los gráficos de Chart.js y en las tarjetas.
+
+Visualización ECG: Para evitar saturar el servidor FHIR con miles de puntos por segundo, las 12 señales del ECG en tiempo real se transmiten directamente desde el simulador de Python hacia el navegador mediante un canal rápido de WebSockets en ws://localh
+ost:8081/ws/ecg.

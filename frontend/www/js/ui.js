@@ -136,7 +136,62 @@ function toggleAudio() {
         logMessage("Alarmas sonoras activas. Cumplimiento IEC 60601-1-8.", "warning");
         audioEngine.playHeartbeat(800);
     }
+    
+    // Actualizar el estado visual del botón de mute en el panel flotante
+    const panelMuteBtn = document.getElementById("panel-mute-btn");
+    if (panelMuteBtn) {
+        if (isMuted) {
+            panelMuteBtn.textContent = "Activar Sonido";
+            panelMuteBtn.className = "w-full py-1.5 rounded-lg bg-emerald-950/40 text-emerald-400 border border-emerald-500/20 text-xs font-bold transition hover:bg-emerald-900/30";
+        } else {
+            panelMuteBtn.textContent = "Silenciar Todo";
+            panelMuteBtn.className = "w-full py-1.5 rounded-lg bg-red-950/40 text-red-400 border border-red-500/20 text-xs font-bold transition hover:bg-red-900/30";
+        }
+    }
 }
+
+/**
+ * Mostrar u ocultar el panel flotante de control de volumen
+ */
+function toggleVolumePanel(event) {
+    if (event) event.stopPropagation();
+    const panel = document.getElementById("volume-panel");
+    if (panel) {
+        panel.classList.toggle("hidden");
+    }
+}
+
+/**
+ * Cambiar el volumen de un tipo específico de sonido (ECG heartbeat, Flatline, Alarm)
+ */
+function changeSoundVolume(soundType, val) {
+    const percentageText = document.getElementById(`vol-${soundType}-txt`);
+    if (percentageText) {
+        percentageText.textContent = `${val}%`;
+    }
+    
+    let scaledVal = 0;
+    if (soundType === 'heartbeat') {
+        scaledVal = (val / 100) * 0.2; // Rango de ganancia: 0 a 0.2
+    } else if (soundType === 'flatline') {
+        scaledVal = (val / 100) * 0.15; // Rango de ganancia: 0 a 0.15
+    } else if (soundType === 'alarm') {
+        scaledVal = (val / 100) * 0.2; // Rango de ganancia: 0 a 0.2
+    }
+    
+    if (typeof audioEngine !== 'undefined') {
+        audioEngine.setVolume(soundType, scaledVal);
+    }
+}
+
+// Cerrar el panel flotante si el usuario hace clic en cualquier parte fuera de él
+document.addEventListener("click", (e) => {
+    const panel = document.getElementById("volume-panel");
+    const container = document.getElementById("audio-control-container");
+    if (panel && container && !container.contains(e.target)) {
+        panel.classList.add("hidden");
+    }
+});
 
 /**
  * Dibujar botones del controlador de simulación según el dispositivo médico activo
@@ -416,6 +471,14 @@ window.pushEcgSamples = function(payload) {
     if (!payload || !payload.leads || !payload.time) return;
     if (payload.sampling_rate) _ecgSamplingRate = payload.sampling_rate;
     const nSamples = payload.time.length;
+    
+    // Si el lector se ha quedado muy atrás respecto a la escritura (más de 1000 muestras, ~2 segundos),
+    // significa que la pestaña estuvo minimizada o suspendida. Vaciamos el buffer para sincronizar en tiempo real.
+    const lag = _ecgRingWrite - _ecgRingRead;
+    if (lag > 1000) {
+        _ecgRingRead = _ecgRingWrite;
+    }
+
     for (let s = 0; s < nSamples; s++) {
         ECG_LEADS.forEach(lead => {
             if (!_ecgRingBuf[lead]) {
